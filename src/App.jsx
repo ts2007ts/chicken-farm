@@ -371,8 +371,8 @@ function App() {
                     : 'text-gray-600 hover:text-amber-600 hover:bg-amber-50'
                 }`}
               >
-                <span className="sm:ml-2">{tab.icon}</span>
-                <span className="hidden sm:inline mr-1">{tab.name}</span>
+                <span className="text-2xl sm:text-base sm:ml-2">{tab.icon}</span>
+                <span className="text-sm sm:text-base">{tab.name}</span>
               </button>
             ))}
           </div>
