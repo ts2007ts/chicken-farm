@@ -1,0 +1,5 @@
+export { default as DashboardPage } from './DashboardPage'
+export { default as InvestorsPage } from './InvestorsPage'
+export { default as ExpensesPage } from './ExpensesPage'
+export { default as EggsPage } from './EggsPage'
+export { default as InventoryPage } from './InventoryPage'
