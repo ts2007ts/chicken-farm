@@ -52,6 +52,12 @@ function App() {
   const transactionsPerPage = 10
   const [selectedInvestorForDetails, setSelectedInvestorForDetails] = useState(null)
 
+  // Filter states
+  const [filterDate, setFilterDate] = useState('')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterAmount, setFilterAmount] = useState('')
+  const [filterNotes, setFilterNotes] = useState('')
+
   // Firebase Subscriptions
   useEffect(() => {
     if (!currentUser) {
@@ -171,6 +177,11 @@ function App() {
   }
 
   const handleEditTransaction = async (id, updates) => {
+    if (!id) {
+      console.error("Transaction ID is missing")
+      alert("خطأ: معرف المعاملة مفقود")
+      return
+    }
     try {
       await updateTransactionFirestore(id, updates)
     } catch (error) {
@@ -316,6 +327,22 @@ function App() {
     )
   }
 
+  const filteredTransactions = transactions.filter(t => {
+    const dateMatch = filterDate === '' || new Date(t.date).toISOString().split('T')[0] === new Date(filterDate).toISOString().split('T')[0]
+    const categoryMatch = filterCategory === 'all' || t.type === filterCategory || (t.type === 'expense' && t.category === filterCategory)
+    const amountMatch = filterAmount === '' || t.amount.toString().includes(filterAmount)
+    const notesMatch = filterNotes === '' || (t.note && t.note.includes(filterNotes)) || (t.investorName && t.investorName.includes(filterNotes))
+    
+    // Debug logging for search
+    if (filterNotes === 'سارا') {
+      console.log('Transaction:', t)
+      console.log('Notes:', t.note, 'InvestorName:', t.investorName)
+      console.log('NotesMatch:', notesMatch)
+    }
+    
+    return dateMatch && categoryMatch && amountMatch && notesMatch
+  })
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100" dir="rtl">
       {/* Header */}
@@ -436,7 +463,7 @@ function App() {
               <h2 className="text-lg font-bold text-gray-800 mb-4">ملخص حصص المستثمرين</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {investors.map(investor => (
-                  <div key={investor.id} className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
+                  <div key={investor.id} className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 text-center">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-gray-800">{investor.name}</span>
                       <span className="text-amber-600 font-bold">{getInvestorShare(investor)}%</span>
@@ -454,11 +481,11 @@ function App() {
             {/* Recent Transactions */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-lg font-bold text-gray-800 mb-4">آخر المعاملات</h2>
-              {transactions.length === 0 ? (
+              {filteredTransactions.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">لا توجد معاملات بعد</p>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {transactions.slice(0, 10).map(transaction => (
+                  {filteredTransactions.slice(0, 10).map(transaction => (
                     <div key={transaction.id} className={`flex items-center justify-between p-3 rounded-lg ${
                       transaction.type === 'expense' ? 'bg-red-50' : 
                       transaction.type === 'settlement' ? 'bg-purple-50' : 'bg-green-50'
@@ -597,14 +624,79 @@ function App() {
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-gray-800">سجل المعاملات</h3>
-                <span className="text-sm text-gray-500">إجمالي: {transactions.length} معاملة</span>
+                <span className="text-sm text-gray-500">إجمالي: {filteredTransactions.length} معاملة</span>
               </div>
-              {transactions.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">لا توجد معاملات بعد</p>
+              
+              {/* Filters */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h4 className="font-medium text-gray-700 mb-3">الفلاتر</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">التاريخ</label>
+                    <input
+                      type="date"
+                      value={filterDate}
+                      onChange={(e) => setFilterDate(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">الفئة</label>
+                    <select
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    >
+                      <option value="all">جميع الفئات</option>
+                      <option value="expense">مصروفات</option>
+                      <option value="contribution">إضافات</option>
+                      <option value="settlement">تصفيات</option>
+                      {EXPENSE_CATEGORIES.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">المبلغ</label>
+                    <input
+                      type="number"
+                      value={filterAmount}
+                      onChange={(e) => setFilterAmount(e.target.value)}
+                      placeholder="أدخل المبلغ"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">الملاحظة</label>
+                    <input
+                      type="text"
+                      value={filterNotes}
+                      onChange={(e) => setFilterNotes(e.target.value)}
+                      placeholder="بحث في الملاحظات وأسماء المستثمرين"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => {
+                        setFilterDate('')
+                        setFilterCategory('all')
+                        setFilterAmount('')
+                        setFilterNotes('')
+                      }}
+                      className="w-full px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                    >
+                      مسح الفلاتر
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {filteredTransactions.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">لا توجد معاملات مطابقة للفلاتر</p>
               ) : (
                 <>
                   <div className="space-y-2">
-                    {transactions
+                    {filteredTransactions
                       .slice((currentPage - 1) * transactionsPerPage, currentPage * transactionsPerPage)
                       .map(transaction => (
                       <div key={transaction.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 rounded-lg gap-2 sm:gap-0 ${
@@ -649,13 +741,13 @@ function App() {
                   </div>
                   
                   {/* Pagination */}
-                  {transactions.length > transactionsPerPage && (
+                  {filteredTransactions.length > transactionsPerPage && (
                     <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-200">
                       <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">««</button>
                       <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">«</button>
-                      <span className="px-4 py-1 text-sm text-gray-600">صفحة {currentPage} من {Math.ceil(transactions.length / transactionsPerPage)}</span>
-                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(transactions.length / transactionsPerPage)))} disabled={currentPage === Math.ceil(transactions.length / transactionsPerPage)} className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">»</button>
-                      <button onClick={() => setCurrentPage(Math.ceil(transactions.length / transactionsPerPage))} disabled={currentPage === Math.ceil(transactions.length / transactionsPerPage)} className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">»»</button>
+                      <span className="px-4 py-1 text-sm text-gray-600">صفحة {currentPage} من {Math.ceil(filteredTransactions.length / transactionsPerPage)}</span>
+                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredTransactions.length / transactionsPerPage)))} disabled={currentPage === Math.ceil(filteredTransactions.length / transactionsPerPage)} className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">»</button>
+                      <button onClick={() => setCurrentPage(Math.ceil(filteredTransactions.length / transactionsPerPage))} disabled={currentPage === Math.ceil(filteredTransactions.length / transactionsPerPage)} className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">»»</button>
                     </div>
                   )}
                 </>

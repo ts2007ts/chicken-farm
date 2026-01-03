@@ -69,12 +69,14 @@ export async function addTransaction(transaction) {
 }
 
 export async function updateTransaction(transactionId, data) {
-  const docRef = doc(db, COLLECTIONS.TRANSACTIONS, transactionId)
+  if (!transactionId) throw new Error('Transaction ID is required')
+  const docRef = doc(db, COLLECTIONS.TRANSACTIONS, String(transactionId))
   await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() })
 }
 
 export async function deleteTransaction(transactionId) {
-  await deleteDoc(doc(db, COLLECTIONS.TRANSACTIONS, transactionId))
+  if (!transactionId) throw new Error('Transaction ID is required')
+  await deleteDoc(doc(db, COLLECTIONS.TRANSACTIONS, String(transactionId)))
 }
 
 export function subscribeToTransactions(callback) {
