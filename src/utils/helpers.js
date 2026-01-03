@@ -1,7 +1,10 @@
 export const formatDate = (dateString) => {
   const date = new Date(dateString)
   const day = date.getDate().toString().padStart(2, '0')
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const months = [
+    'كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران',
+    'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'
+  ]
   const month = months[date.getMonth()]
   const year = date.getFullYear()
   // Add Unicode LRM (Left-to-Right Mark) to ensure correct order in RTL layouts
