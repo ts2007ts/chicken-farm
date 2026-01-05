@@ -1,5 +1,6 @@
 import { formatNumber, formatDate, formatBalance } from '../utils/helpers'
 import UserMenu from './UserMenu'
+import NotificationBell from './Header/NotificationBell'
 import { useAuth } from '../contexts/AuthContext'
 import { useAppData } from '../hooks/useAppData'
 import { useCalculations } from '../hooks/useCalculations'
@@ -46,6 +47,7 @@ function Header({ setShowImportExportModal }) {
                 {balance < 0 ? `(${formatNumber(Math.abs(balance))})` : formatNumber(balance)} {t.common.currency}
               </p>
             </div>
+            <NotificationBell />
             <UserMenu />
           </div>
         </div>

@@ -8,7 +8,10 @@ import {
   EggForm, 
   SettlementForm, 
   EditTransactionForm, 
-  ImportExportForm 
+  ImportExportForm,
+  ChickenForm,
+  FeedForm,
+  ArchiveForm
 } from './forms'
 import Dashboard from './dashboard/Dashboard'
 import InvestorList from './investors/InvestorList'
@@ -27,7 +30,7 @@ import { useModals } from '../hooks/useModals'
 function MainContent({ activeTab, showImportExportModal, setShowImportExportModal }) {
   const { currentUser, userProfile, isAdmin, isSuperAdmin } = useAuth()
   const { t, language } = useLanguage()
-  const { investors, transactions, eggs, settings, loading } = useAppData(currentUser)
+  const { investors, transactions, eggs, settings, chickenInventory, feedInventory, archives, loading } = useAppData(currentUser)
   const calculations = useCalculations(investors, transactions, eggs, settings)
   const filters = useFilters(transactions)
   const actions = useActions(investors, userProfile)
@@ -56,6 +59,9 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
 
 
   const [selectedInvestorForDetails, setSelectedInvestorForDetails] = useState(null)
+  const [showChickenModal, setShowChickenModal] = useState(false)
+  const [showFeedModal, setShowFeedModal] = useState(false)
+  const [showArchiveModal, setShowArchiveModal] = useState(false)
 
   useEffect(() => {
     if (userProfile?.investorId) {
@@ -83,6 +89,9 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
           investors={investors}
           transactions={transactions}
           calculations={calculations}
+          chickenInventory={chickenInventory}
+          feedInventory={feedInventory}
+          archives={archives}
         />
       )}
 
@@ -96,6 +105,10 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
           setShowExpenseModal={modals.setShowExpenseModal}
           setShowContributionModal={modals.setShowContributionModal}
           setShowEggModal={modals.setShowEggModal}
+          eggs={eggs}
+          transactions={transactions}
+          families={families}
+          settings={settings}
         />
       )}
 
@@ -149,10 +162,45 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
           setSelectedInvestorForDetails={setSelectedInvestorForDetails}
           isAdmin={isAdmin}
           userProfile={userProfile}
+          chickenInventory={chickenInventory}
+          feedInventory={feedInventory}
+          archives={archives}
+          onAddChicken={() => setShowChickenModal(true)}
+          onAddFeed={() => setShowFeedModal(true)}
+          onArchiveCycle={() => setShowArchiveModal(true)}
+          onDeleteChicken={actions.handleDeleteChickenRecord}
+          onDeleteFeed={actions.handleDeleteFeedRecord}
         />
       )}
 
       {/* Modals */}
+      {showArchiveModal && (
+        <Modal title={t?.eggs?.archives?.title || 'Archive'} onClose={() => setShowArchiveModal(false)}>
+          <ArchiveForm 
+            onSubmit={actions.handleArchiveCycle} 
+            onClose={() => setShowArchiveModal(false)} 
+          />
+        </Modal>
+      )}
+
+      {showChickenModal && (
+        <Modal title={t?.eggs?.chicken?.add || 'Add Chicken'} onClose={() => setShowChickenModal(false)}>
+          <ChickenForm 
+            onSubmit={actions.handleAddChickenRecord} 
+            onClose={() => setShowChickenModal(false)} 
+          />
+        </Modal>
+      )}
+
+      {showFeedModal && (
+        <Modal title={t?.eggs?.feed?.add || 'Add Feed'} onClose={() => setShowFeedModal(false)}>
+          <FeedForm 
+            onSubmit={actions.handleAddFeedRecord} 
+            onClose={() => setShowFeedModal(false)} 
+          />
+        </Modal>
+      )}
+
       {modals.showCapitalModal && (
         <Modal title={t.dashboard.setCapital} onClose={() => modals.setShowCapitalModal(false)}>
           <CapitalForm 

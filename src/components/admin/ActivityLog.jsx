@@ -18,11 +18,22 @@ function ActivityLog() {
 
   const getLogIcon = (type) => {
     switch (type) {
+      case 'login': return '🔑'
+      case 'logout': return '🚪'
       case 'set_capital': return '💰'
+      case 'add_transaction': return '➕'
+      case 'update_transaction': return '📝'
+      case 'delete_transaction': return '🗑️'
       case 'add_expense': return '💸'
       case 'add_contribution': return '📈'
-      case 'add_eggs': return '🥚'
-      case 'delete_transaction': return '🗑️'
+      case 'add_egg': return '🥚'
+      case 'update_egg': return '🔄'
+      case 'delete_egg': return '🥚'
+      case 'reject_egg_delivery': return '⚠️'
+      case 'add_chicken_record': return '🐣'
+      case 'add_feed_record': return '🌾'
+      case 'archive_cycle': return '📦'
+      case 'update_setting': return '⚙️'
       default: return '📝'
     }
   }

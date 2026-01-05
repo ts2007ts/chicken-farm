@@ -5,7 +5,10 @@ import {
   subscribeToTransactions,
   subscribeToEggs,
   initializeInvestors,
-  subscribeToSettings
+  subscribeToSettings,
+  subscribeToChickenInventory,
+  subscribeToFeedInventory,
+  subscribeToArchives
 } from '../firebase/firestore'
 
 export function useAppData(currentUser) {
@@ -13,6 +16,9 @@ export function useAppData(currentUser) {
   const [transactions, setTransactions] = useState([])
   const [eggs, setEggs] = useState([])
   const [settings, setSettings] = useState({})
+  const [chickenInventory, setChickenInventory] = useState([])
+  const [feedInventory, setFeedInventory] = useState([])
+  const [archives, setArchives] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -48,6 +54,18 @@ export function useAppData(currentUser) {
       setSettings(data)
     })
 
+    const unsubChicken = subscribeToChickenInventory((data) => {
+      setChickenInventory(data)
+    })
+
+    const unsubFeed = subscribeToFeedInventory((data) => {
+      setFeedInventory(data)
+    })
+
+    const unsubArchives = subscribeToArchives((data) => {
+      setArchives(data)
+    })
+
     setLoading(false)
 
     return () => {
@@ -55,8 +73,11 @@ export function useAppData(currentUser) {
       unsubTransactions()
       unsubEggs()
       unsubSettings()
+      unsubChicken()
+      unsubFeed()
+      unsubArchives()
     }
   }, [currentUser])
 
-  return { investors, transactions, eggs, settings, loading }
+  return { investors, transactions, eggs, settings, chickenInventory, feedInventory, archives, loading }
 }

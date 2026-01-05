@@ -32,7 +32,7 @@ function CategoryManager() {
       await addLog({
         type: 'init_categories',
         message: `Initialized default expense categories`,
-        user: userProfile?.investorName || 'Admin'
+        user: userProfile?.email || 'Admin'
       })
     } catch (error) {
       console.error("Error initializing categories:", error)
@@ -49,7 +49,7 @@ function CategoryManager() {
       await addLog({
         type: 'edit_category',
         message: `Edited expense category: ${newCategory.name}`,
-        user: userProfile?.investorName || 'Admin',
+        user: userProfile?.email || 'Admin',
         details: newCategory
       })
     } else {
@@ -58,7 +58,7 @@ function CategoryManager() {
       await addLog({
         type: 'add_category',
         message: `Added expense category: ${newCategory.name}`,
-        user: userProfile?.investorName || 'Admin',
+        user: userProfile?.email || 'Admin',
         details: newCategory
       })
     }
@@ -89,7 +89,7 @@ function CategoryManager() {
       await addLog({
         type: 'delete_category',
         message: `Deleted expense category: ${category?.name}`,
-        user: userProfile?.investorName || 'Admin',
+        user: userProfile?.email || 'Admin',
         details: { id }
       })
     } catch (error) {

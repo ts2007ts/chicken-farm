@@ -10,7 +10,8 @@ import {
   onSnapshot,
   query,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  where
 } from 'firebase/firestore'
 import { db } from './config'
 
@@ -21,7 +22,10 @@ const COLLECTIONS = {
   EGGS: 'eggs',
   USERS: 'users',
   LOGS: 'logs',
-  SETTINGS: 'settings'
+  SETTINGS: 'settings',
+  CHICKEN_INVENTORY: 'chicken_inventory',
+  FEED_INVENTORY: 'feed_inventory',
+  ARCHIVES: 'archives'
 }
 
 // ============ INVESTORS ============
@@ -30,9 +34,51 @@ export async function getInvestors() {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 }
 
-export async function updateInvestor(investorId, data) {
+export async function addInvestor(investor, userEmail = 'System') {
+  const docRef = await addDoc(collection(db, COLLECTIONS.INVESTORS), {
+    ...investor,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  })
+  
+  await addLog({
+    type: 'add_investor',
+    message: `Added new investor: ${investor.name}`,
+    user: userEmail,
+    details: investor
+  })
+  
+  return docRef.id
+}
+
+export async function updateInvestor(investorId, data, userEmail = 'System') {
   const docRef = doc(db, COLLECTIONS.INVESTORS, String(investorId))
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+  
   await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true })
+  
+  await addLog({
+    type: 'update_investor',
+    message: `Updated investor: ${data.name || oldData.name}`,
+    user: userEmail,
+    details: { before: oldData, after: data }
+  })
+}
+
+export async function deleteInvestor(investorId, userEmail = 'System') {
+  const docRef = doc(db, COLLECTIONS.INVESTORS, String(investorId))
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+  
+  await deleteDoc(docRef)
+  
+  await addLog({
+    type: 'delete_investor',
+    message: `Deleted investor: ${oldData.name}`,
+    user: userEmail,
+    details: oldData
+  })
 }
 
 export async function initializeInvestors(investors) {
@@ -62,23 +108,52 @@ export async function getTransactions() {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 }
 
-export async function addTransaction(transaction) {
+export async function addTransaction(transaction, userEmail = 'System') {
   const docRef = await addDoc(collection(db, COLLECTIONS.TRANSACTIONS), {
     ...transaction,
     createdAt: serverTimestamp()
   })
+  
+  await addLog({
+    type: 'add_transaction',
+    message: `Added ${transaction.type}: ${transaction.amount} L.S - ${transaction.note || ''}`,
+    user: userEmail,
+    details: transaction
+  })
+  
   return docRef.id
 }
 
-export async function updateTransaction(transactionId, data) {
+export async function updateTransaction(transactionId, data, userEmail = 'System') {
   if (!transactionId) throw new Error('Transaction ID is required')
   const docRef = doc(db, COLLECTIONS.TRANSACTIONS, String(transactionId))
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+  
   await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() })
+  
+  await addLog({
+    type: 'update_transaction',
+    message: `Updated transaction ${transactionId}`,
+    user: userEmail,
+    details: { before: oldData, after: data }
+  })
 }
 
-export async function deleteTransaction(transactionId) {
+export async function deleteTransaction(transactionId, userEmail = 'System') {
   if (!transactionId) throw new Error('Transaction ID is required')
-  await deleteDoc(doc(db, COLLECTIONS.TRANSACTIONS, String(transactionId)))
+  const docRef = doc(db, COLLECTIONS.TRANSACTIONS, String(transactionId))
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+
+  await deleteDoc(docRef)
+  
+  await addLog({
+    type: 'delete_transaction',
+    message: `Deleted transaction: ${oldData.amount} L.S - ${oldData.note || ''}`,
+    user: userEmail,
+    details: oldData
+  })
 }
 
 export function subscribeToTransactions(callback) {
@@ -96,21 +171,50 @@ export async function getEggs() {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 }
 
-export async function addEgg(egg) {
+export async function addEgg(egg, userEmail = 'System') {
   const docRef = await addDoc(collection(db, COLLECTIONS.EGGS), {
     ...egg,
     createdAt: serverTimestamp()
   })
+  
+  await addLog({
+    type: 'add_egg',
+    message: `Recorded egg production: ${egg.quantity} eggs`,
+    user: userEmail,
+    details: egg
+  })
+  
   return docRef.id
 }
 
-export async function deleteEgg(eggId) {
-  await deleteDoc(doc(db, COLLECTIONS.EGGS, eggId))
+export async function deleteEgg(eggId, userEmail = 'System') {
+  const docRef = doc(db, COLLECTIONS.EGGS, eggId)
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+
+  await deleteDoc(docRef)
+  
+  await addLog({
+    type: 'delete_egg',
+    message: `Deleted egg record: ${oldData.quantity} eggs from ${oldData.date}`,
+    user: userEmail,
+    details: oldData
+  })
 }
 
-export async function updateEgg(eggId, data) {
+export async function updateEgg(eggId, data, userEmail = 'System') {
   const docRef = doc(db, COLLECTIONS.EGGS, eggId)
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+
   await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() })
+  
+  await addLog({
+    type: 'update_egg',
+    message: `Updated egg record from ${oldData.quantity} to ${data.quantity} eggs`,
+    user: userEmail,
+    details: { before: oldData, after: data }
+  })
 }
 
 export async function getUserProfile(uid) {
@@ -134,13 +238,33 @@ export async function getUserByEmail(email) {
   return users.find(u => u.email === email)
 }
 
-export async function updateUserRole(uid, investorName, investorId, role = 'investor') {
+export async function updateUserProfile(uid, data, userEmail = 'System') {
   const docRef = doc(db, COLLECTIONS.USERS, uid)
-  await updateDoc(docRef, { 
-    investorName, 
-    investorId, 
-    role,
-    updatedAt: serverTimestamp() 
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+  
+  await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true })
+  
+  await addLog({
+    type: 'update_user',
+    message: `Updated user profile/role for: ${data.email || oldData.email}`,
+    user: userEmail,
+    details: { before: oldData, after: data }
+  })
+}
+
+export async function deleteUser(uid, userEmail = 'System') {
+  const docRef = doc(db, COLLECTIONS.USERS, uid)
+  const oldDoc = await getDoc(docRef)
+  const oldData = oldDoc.exists() ? oldDoc.data() : {}
+  
+  await deleteDoc(docRef)
+  
+  await addLog({
+    type: 'delete_user',
+    message: `Deleted user: ${oldData.email}`,
+    user: userEmail,
+    details: oldData
   })
 }
 
@@ -193,6 +317,69 @@ export function subscribeToSettings(callback) {
       settings[doc.id] = doc.data()
     })
     callback(settings)
+  })
+}
+
+// ============ CHICKEN INVENTORY ============
+export async function addChickenRecord(record) {
+  const docRef = await addDoc(collection(db, COLLECTIONS.CHICKEN_INVENTORY), {
+    ...record,
+    createdAt: serverTimestamp()
+  })
+  return docRef.id
+}
+
+export function subscribeToChickenInventory(callback) {
+  const q = query(collection(db, COLLECTIONS.CHICKEN_INVENTORY), orderBy('date', 'desc'))
+  return onSnapshot(q, (snapshot) => {
+    const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    callback(records)
+  })
+}
+
+export async function deleteChickenRecord(id) {
+  await deleteDoc(doc(db, COLLECTIONS.CHICKEN_INVENTORY, id))
+}
+
+// ============ FEED INVENTORY ============
+export async function addFeedRecord(record) {
+  const docRef = await addDoc(collection(db, COLLECTIONS.FEED_INVENTORY), {
+    ...record,
+    createdAt: serverTimestamp()
+  })
+  return docRef.id
+}
+
+export function subscribeToFeedInventory(callback) {
+  const q = query(collection(db, COLLECTIONS.FEED_INVENTORY), orderBy('date', 'desc'))
+  return onSnapshot(q, (snapshot) => {
+    const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    callback(records)
+  })
+}
+
+export async function deleteFeedRecord(id) {
+  await deleteDoc(doc(db, COLLECTIONS.FEED_INVENTORY, id))
+}
+
+// ============ ARCHIVES (Cycle Archiving) ============
+export async function archiveCycle(archiveData) {
+  const docRef = await addDoc(collection(db, COLLECTIONS.ARCHIVES), {
+    ...archiveData,
+    archivedAt: serverTimestamp()
+  })
+  
+  // After archiving, clear current data
+  await clearAllData()
+  
+  return docRef.id
+}
+
+export function subscribeToArchives(callback) {
+  const q = query(collection(db, COLLECTIONS.ARCHIVES), orderBy('archivedAt', 'desc'))
+  return onSnapshot(q, (snapshot) => {
+    const archives = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    callback(archives)
   })
 }
 

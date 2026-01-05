@@ -1,5 +1,6 @@
 import { formatNumber, formatDate, formatBalance } from '../../utils/helpers'
 import { useLanguage } from '../../contexts/LanguageContext'
+import AnalyticsDashboard from './AnalyticsDashboard'
 
 function Dashboard({ 
   totalInitialCapital, 
@@ -15,12 +16,23 @@ function Dashboard({
   setShowCapitalModal, 
   setShowExpenseModal, 
   setShowContributionModal, 
-  setShowEggModal 
+  setShowEggModal,
+  eggs,
+  transactions,
+  families,
+  settings
 }) {
   const { t, language } = useLanguage()
 
   return (
     <div className="space-y-6">
+      <AnalyticsDashboard 
+        eggs={eggs}
+        transactions={transactions}
+        families={families}
+        settings={settings}
+      />
+      
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-md p-4 border-r-4 border-green-500">

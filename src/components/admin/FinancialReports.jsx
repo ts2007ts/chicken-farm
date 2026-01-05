@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { formatNumber, formatDate } from '../../utils/helpers'
 import { useLanguage } from '../../contexts/LanguageContext'
 
-function FinancialReports({ transactions, investors, totalExpenses, totalContributions, totalEggs }) {
+function FinancialReports({ transactions, investors, totalExpenses, totalContributions, totalEggs, chickenInventory, feedInventory, archives }) {
   const { t, language } = useLanguage()
   const [timeframe, setTimeframe] = useState('all') // all, month, year
 
@@ -24,8 +24,13 @@ function FinancialReports({ transactions, investors, totalExpenses, totalContrib
     const expenses = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
     const contributions = filteredTransactions.filter(t => t.type === 'contribution').reduce((sum, t) => sum + t.amount, 0)
     const net = contributions - expenses
-    return { expenses, contributions, net }
-  }, [filteredTransactions])
+    
+    const totalChickens = chickenInventory?.reduce((sum, r) => sum + (r.quantity || 0), 0) || 0
+    const totalFeed = feedInventory?.reduce((sum, r) => sum + (r.quantity || 0), 0) || 0
+    const totalArchives = archives?.length || 0
+
+    return { expenses, contributions, net, totalChickens, totalFeed, totalArchives }
+  }, [filteredTransactions, chickenInventory, feedInventory, archives])
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden col-span-full">
@@ -59,6 +64,31 @@ function FinancialReports({ transactions, investors, totalExpenses, totalContrib
           <p className={`text-2xl font-bold ${stats.net >= 0 ? 'text-green-700' : 'text-orange-700'}`}>
             {formatNumber(stats.net)} {t.common.currency}
           </p>
+        </div>
+      </div>
+
+      {/* Inventory Stats */}
+      <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-100 pt-6">
+        <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-amber-600 font-medium">{language === 'ar' ? 'إجمالي الدجاج' : 'Total Chickens'}</p>
+            <p className="text-xl font-bold text-amber-700">{formatNumber(stats.totalChickens)}</p>
+          </div>
+          <span className="text-2xl">🐔</span>
+        </div>
+        <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-emerald-600 font-medium">{language === 'ar' ? 'إجمالي العلف' : 'Total Feed'}</p>
+            <p className="text-xl font-bold text-emerald-700">{formatNumber(stats.totalFeed)} <span className="text-sm">كجم</span></p>
+          </div>
+          <span className="text-2xl">🌾</span>
+        </div>
+        <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-indigo-600 font-medium">{language === 'ar' ? 'الدورات المؤرشفة' : 'Archived Cycles'}</p>
+            <p className="text-xl font-bold text-indigo-700">{stats.totalArchives}</p>
+          </div>
+          <span className="text-2xl">📁</span>
         </div>
       </div>
       

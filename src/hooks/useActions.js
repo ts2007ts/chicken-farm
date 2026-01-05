@@ -1,4 +1,5 @@
 import {
+  addLog,
   updateInvestor,
   addTransaction,
   updateTransaction as updateTransactionFirestore,
@@ -8,10 +9,17 @@ import {
   deleteEgg as deleteEggFirestore,
   exportAllData,
   importAllData,
-  addLog
+  addChickenRecord,
+  deleteChickenRecord,
+  addFeedRecord,
+  deleteFeedRecord,
+  archiveCycle,
 } from '../firebase/firestore'
+import { useNotifications } from '../contexts/NotificationContext'
 
 export function useActions(investors, userProfile) {
+  const { notifyAllInvestors, sendNotification, deleteNotificationsByRelatedId } = useNotifications()
+
   const handleSetCapital = async (investorId, amount) => {
     try {
       await updateInvestor(investorId, { initialCapital: amount, currentCapital: amount })
@@ -22,6 +30,15 @@ export function useActions(investors, userProfile) {
         user: userProfile?.investorName || 'Admin',
         details: { investorId, amount }
       })
+
+      // Notify all investors about capital change
+      await notifyAllInvestors(
+        'notifications.types.capital',
+        'notifications.messages.capital',
+        'capital',
+        investorId,
+        { name: investor?.name, amount, currency: 'ل.س' }
+      )
     } catch (error) {
       console.error("Error setting capital:", error)
       alert("خطأ في حفظ رأس المال")
@@ -30,16 +47,25 @@ export function useActions(investors, userProfile) {
 
   const handleAddExpense = async (expense) => {
     try {
-      await addTransaction({
+      const transactionId = await addTransaction({
         type: 'expense',
         ...expense,
-      })
+      }, userProfile?.email)
       await addLog({
         type: 'add_expense',
         message: `Added expense: ${expense.amount} - ${expense.note || ''}`,
         user: userProfile?.investorName || 'Admin',
         details: expense
       })
+
+      // Notify all investors about new expense
+      await notifyAllInvestors(
+        'notifications.types.expense',
+        'notifications.messages.expense',
+        'expense',
+        transactionId,
+        { amount: expense.amount, currency: 'ل.س', note: expense.note || '' }
+      )
     } catch (error) {
       console.error("Error adding expense:", error)
       alert("خطأ في حفظ المصروف")
@@ -53,30 +79,59 @@ export function useActions(investors, userProfile) {
       return
     }
     try {
-      await updateTransactionFirestore(id, updates)
+      await updateTransactionFirestore(id, updates, userProfile?.email)
     } catch (error) {
       console.error("Error editing transaction:", error)
       alert("خطأ في تعديل المعاملة")
     }
   }
 
+  const handleUpdateSetting = async (id, data) => {
+    try {
+      const oldSettings = await getSettings();
+      const oldValue = id === 'family_settings' ? oldSettings.family_settings?.eggPrice : null;
+      
+      await updateSetting(id, data);
+      
+      if (id === 'family_settings' && data.eggPrice !== oldValue) {
+        await addLog({
+          type: 'update_setting',
+          message: `Changed egg price from ${oldValue} to ${data.eggPrice}`,
+          user: userProfile?.investorName || 'Admin',
+          details: { setting: id, oldValue, newValue: data.eggPrice }
+        })
+      }
+    } catch (error) {
+      console.error("Error updating setting:", error);
+    }
+  }
+
   const handleAddContribution = async (investorId, amount, note, date) => {
     try {
       const investor = investors.find(inv => inv.id === investorId)
-      await addTransaction({
+      const transactionId = await addTransaction({
         type: 'contribution',
         investorId,
         investorName: investor.name,
         amount,
         note,
         date: date || new Date().toISOString(),
-      })
+      }, userProfile?.email)
       await addLog({
         type: 'add_contribution',
         message: `Added contribution for ${investor?.name}: ${amount}`,
         user: userProfile?.investorName || 'Admin',
         details: { investorId, amount, note }
       })
+
+      // Notify all investors about new contribution
+      await notifyAllInvestors(
+        'notifications.types.contribution',
+        'notifications.messages.contribution',
+        'contribution',
+        transactionId,
+        { name: investor?.name, amount, currency: 'ل.س' }
+      )
     } catch (error) {
       console.error("Error adding contribution:", error)
       alert("خطأ في حفظ الإضافة")
@@ -101,7 +156,7 @@ export function useActions(investors, userProfile) {
         });
       }
 
-      await addEgg({
+      const eggId = await addEgg({
         quantity,
         note,
         date: new Date().toISOString(),
@@ -109,13 +164,22 @@ export function useActions(investors, userProfile) {
         recordedById: userProfile.investorId,
         deliveries,
         familyCountAtProduction: familyCount
-      })
+      }, userProfile?.email)
       await addLog({
         type: 'add_eggs',
         message: `Recorded ${quantity} eggs`,
         user: userProfile?.investorName || 'Admin',
         details: { quantity, note }
       })
+
+      // Send notifications
+      await notifyAllInvestors(
+        'notifications.types.egg',
+        'notifications.messages.egg',
+        'egg',
+        eggId,
+        { quantity }
+      )
     } catch (error) {
       console.error("Error adding eggs:", error)
       alert("خطأ في حفظ سجل البيض")
@@ -124,7 +188,9 @@ export function useActions(investors, userProfile) {
 
   const handleDeleteTransaction = async (id) => {
     try {
-      await deleteTransactionFirestore(id)
+      await deleteTransactionFirestore(id, userProfile?.email)
+      // Delete associated notifications
+      await deleteNotificationsByRelatedId(id)
     } catch (error) {
       console.error("Error deleting transaction:", error)
       alert("خطأ في حذف المعاملة")
@@ -142,7 +208,7 @@ export function useActions(investors, userProfile) {
         amount: parseFloat(amount),
         note,
         date: date || new Date().toISOString(),
-      })
+      }, userProfile?.email)
     } catch (error) {
       console.error("Error adding settlement:", error)
       alert("خطأ في حفظ التصفية")
@@ -151,7 +217,9 @@ export function useActions(investors, userProfile) {
 
   const handleDeleteEgg = async (id) => {
     try {
-      await deleteEggFirestore(id)
+      await deleteEggFirestore(id, userProfile?.email)
+      // Delete associated notifications
+      await deleteNotificationsByRelatedId(id)
     } catch (error) {
       console.error("Error deleting egg record:", error)
       alert("خطأ في حذف سجل البيض")
@@ -173,7 +241,7 @@ export function useActions(investors, userProfile) {
             confirmedBy: userProfile.investorName
           }
         }
-      })
+      }, userProfile?.email)
     } catch (error) {
       console.error("Error confirming egg delivery:", error)
       alert("خطأ في تأكيد الاستلام")
@@ -204,7 +272,7 @@ export function useActions(investors, userProfile) {
             eggPrice
           }
         }
-      })
+      }, userProfile?.email)
 
       // 2. Create automated contribution transactions for each family member
       const familyMemberIds = family.investorIds || []
@@ -224,7 +292,7 @@ export function useActions(investors, userProfile) {
               automated: true,
               relatedEggId: eggId,
               relatedFamilyId: familyId
-            })
+            }, userProfile?.email)
           }
         }
       }
@@ -235,6 +303,19 @@ export function useActions(investors, userProfile) {
         user: userProfile?.investorName || 'Admin',
         details: { eggId, familyId, cashValue, eggPrice, totalEggShare, memberCount: familyMemberIds.length }
       })
+
+      // Notify family members
+      for (const investorId of familyMemberIds) {
+        const investor = investors.find(inv => String(inv.id) === String(investorId))
+        if (investor && investor.uid) {
+          await sendNotification(
+            investor.uid,
+            '⚠️ رفض استلام بيض',
+            `تم رفض استلام حصة العائلة من البيض وتحويلها لمبلغ مالي (${cashValue / familyMemberIds.length} ل.س)`,
+            'reject'
+          )
+        }
+      }
 
       alert(`تم رفض الاستلام وتحويل ${totalEggShare} بيضة إلى مبلغ ${cashValue} وتوزيعها على أفراد العائلة`)
     } catch (error) {
@@ -272,6 +353,85 @@ export function useActions(investors, userProfile) {
     }
   }
 
+  const handleAddChickenRecord = async (record) => {
+    try {
+      await addChickenRecord({
+        ...record,
+        recordedBy: userProfile.investorName,
+        recordedById: userProfile.investorId,
+      })
+      await addLog({
+        type: 'add_chicken_record',
+        message: `Added chicken record: ${record.type} - ${record.quantity}`,
+        user: userProfile?.investorName || 'Admin',
+        details: record
+      })
+    } catch (error) {
+      console.error("Error adding chicken record:", error)
+      alert("خطأ في حفظ سجل الدجاج")
+    }
+  }
+
+  const handleDeleteChickenRecord = async (id) => {
+    try {
+      await deleteChickenRecord(id)
+    } catch (error) {
+      console.error("Error deleting chicken record:", error)
+      alert("خطأ في حذف سجل الدجاج")
+    }
+  }
+
+  const handleAddFeedRecord = async (record) => {
+    try {
+      await addFeedRecord({
+        ...record,
+        recordedBy: userProfile.investorName,
+        recordedById: userProfile.investorId,
+      })
+      await addLog({
+        type: 'add_feed_record',
+        message: `Added feed record: ${record.type} - ${record.quantity}kg`,
+        user: userProfile?.investorName || 'Admin',
+        details: record
+      })
+    } catch (error) {
+      console.error("Error adding feed record:", error)
+      alert("خطأ في حفظ سجل الأعلاف")
+    }
+  }
+
+  const handleDeleteFeedRecord = async (id) => {
+    try {
+      await deleteFeedRecord(id)
+    } catch (error) {
+      console.error("Error deleting feed record:", error)
+      alert("خطأ في حذف سجل الأعلاف")
+    }
+  }
+
+  const handleArchiveCycle = async (cycleName) => {
+    if (!window.confirm('هل أنت متأكد من أرشفة هذه الدورة؟ سيتم مسح جميع البيانات الحالية والبدء بدورة جديدة.')) return
+    
+    try {
+      const currentData = await exportAllData()
+      await archiveCycle({
+        name: cycleName,
+        data: currentData,
+        investorCount: investors.length,
+        totalInitialCapital: investors.reduce((sum, inv) => sum + inv.initialCapital, 0)
+      })
+      await addLog({
+        type: 'archive_cycle',
+        message: `Archived cycle: ${cycleName}`,
+        user: userProfile?.investorName || 'Admin'
+      })
+      alert('تم أرشفة الدورة بنجاح والبدء بدورة جديدة')
+    } catch (error) {
+      console.error("Error archiving cycle:", error)
+      alert("خطأ في أرشفة الدورة")
+    }
+  }
+
   return {
     handleSetCapital,
     handleAddExpense,
@@ -284,6 +444,11 @@ export function useActions(investors, userProfile) {
     handleConfirmEggDelivery,
     handleRejectEggDelivery,
     handleExportData,
-    handleImportData
+    handleImportData,
+    handleAddChickenRecord,
+    handleDeleteChickenRecord,
+    handleAddFeedRecord,
+    handleDeleteFeedRecord,
+    handleArchiveCycle
   }
 }

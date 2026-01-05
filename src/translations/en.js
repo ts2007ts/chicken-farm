@@ -147,6 +147,25 @@ export const en = {
     superAdminRole: 'Super Admin',
     confirmDelete: 'Are you sure you want to delete this investor? This will delete all their data.',
   },
+  notifications: {
+    title: 'Notifications',
+    empty: 'No notifications',
+    markAllRead: 'Mark all as read',
+    types: {
+      egg: 'New Egg Production',
+      expense: 'Large Expense Recorded',
+      capital: 'Capital Updated',
+      contribution: 'New Contribution',
+      reject: 'Egg Delivery Rejected'
+    },
+    messages: {
+      egg: 'Recorded production of {quantity} new eggs.',
+      expense: 'Recorded new expense of {amount} {currency}: {note}',
+      capital: 'Capital updated for {name} to {amount} {currency}',
+      contribution: 'Added {amount} {currency} to {name}\'s account',
+      reject: 'Family egg delivery was rejected and converted to cash ({amount} {currency})'
+    }
+  },
   categories: {
     title: 'Expense Categories Management',
     placeholder: 'New category name',

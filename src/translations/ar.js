@@ -110,6 +110,64 @@ export const ar = {
     family1: 'عائلة 1',
     family2: 'عائلة 2',
     family3: 'عائلة 3',
+    chicken: {
+      title: 'سجل الدجاج',
+      quantity: 'عدد الدجاج',
+      type: 'النوع',
+      death: 'وفيات',
+      production: 'إنتاجية',
+      add: 'إضافة سجل دجاج',
+      buy: 'شراء دجاج',
+      initial: 'بداية الدورة',
+    },
+    feed: {
+      title: 'مخزن الأعلاف',
+      quantity: 'الكمية (كغ)',
+      type: 'النوع',
+      add: 'إضافة سجل أعلاف',
+      buy: 'شراء أعلاف',
+      consume: 'استهلاك',
+      remaining: 'المخزون المتبقي',
+      alert: 'تنبيه: المخزون منخفض!',
+    },
+    archives: {
+      title: 'أرشفة الدورات',
+      archiveNow: 'أرشفة الدورة الحالية',
+      cycleName: 'اسم الدورة (مثلاً: فوج خريف 2025)',
+      noArchives: 'لا توجد دورات مؤرشفة بعد',
+      archivedAt: 'تاريخ الأرشفة',
+      investors: 'عدد المستثمرين',
+      capital: 'رأس المال عند البدء',
+    },
+    analytics: {
+      title: 'التحليلات المتقدمة',
+      eggProduction: 'منحنى إنتاج البيض',
+      profitability: 'تحليل الربحية',
+      netProfit: 'صافي الربح المتوقع',
+      familyPerformance: 'أداء العائلات (الاستلام vs الرفض)',
+      confirmed: 'مؤكد',
+      rejected: 'مرفوض',
+      production: 'الإنتاج',
+    },
+    notifications: {
+      title: 'الإشعارات',
+      empty: 'لا توجد إشعارات',
+      markAllRead: 'تحديد الكل كمقروء',
+      types: {
+        egg: 'إنتاج بيض جديد',
+        expense: 'مصروفات كبيرة',
+        capital: 'تحديث رأس المال',
+        contribution: 'إضافة للرأسمال',
+        reject: 'رفض استلام بيض'
+      },
+      messages: {
+        egg: 'تم تسجيل إنتاج {quantity} بيضة جديدة.',
+        expense: 'تم تسجيل مصروف جديد بمبلغ {amount} {currency}: {note}',
+        capital: 'تم تحديث رأس المال للمستثمر {name} ليصبح {amount} {currency}',
+        contribution: 'تمت إضافة مبلغ {amount} {currency} لحساب المستثمر {name}',
+        reject: 'تم رفض استلام حصة العائلة من البيض وتحويلها لمبلغ مالي ({amount} {currency})'
+      }
+    },
   },
   inventory: {
     title: 'جرد المزرعة',
@@ -162,7 +220,4 @@ export const ar = {
     maintenance: 'صيانة',
     other: 'أخرى',
   },
-  inventory: {
-    // ... rest of the inventory translations
-  }
 };

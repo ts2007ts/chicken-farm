@@ -48,7 +48,7 @@ function FamilyManager() {
       await addLog({
         type: 'update_egg_price',
         message: `Updated egg price to: ${price}`,
-        user: userProfile?.investorName || 'Admin',
+        user: userProfile?.email || 'Admin',
         details: { eggPrice: price }
       })
     } catch (error) {
@@ -76,7 +76,7 @@ function FamilyManager() {
       await addLog({
         type: 'add_family',
         message: `Added family: ${familyName} (${newFamily.memberCount} members)`,
-        user: userProfile?.investorName || 'Admin',
+        user: userProfile?.email || 'Admin',
         details: { ...newFamily, name: familyName }
       })
       setNewFamily({ name: '', icon: '👨‍👩‍👧‍👦', memberCount: 1, investorIds: [] })
@@ -95,7 +95,7 @@ function FamilyManager() {
       await addLog({
         type: 'delete_family',
         message: `Deleted family: ${family?.name}`,
-        user: userProfile?.investorName || 'Admin',
+        user: userProfile?.email || 'Admin',
         details: { id }
       })
     } catch (error) {
@@ -132,7 +132,7 @@ function FamilyManager() {
       await addLog({
         type: 'update_family',
         message: `Updated family: ${familyName}`,
-        user: userProfile?.investorName || 'Admin',
+        user: userProfile?.email || 'Admin',
         details: { id, ...editValue, name: familyName }
       })
       setEditingId(null)

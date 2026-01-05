@@ -9,12 +9,16 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
+import { addLog } from '../firebase/firestore'
 
 const AuthContext = createContext()
 
 export function useAuth() {
   return useContext(AuthContext)
 }
+
+// Initial bootstrap email for first super admin
+const INITIAL_SUPER_ADMIN_EMAIL = import.meta.env.VITE_INITIAL_SUPER_ADMIN_EMAIL;
 
 // Map emails to investors - أضف إيميل كل مستثمر هنا
 const EMAIL_TO_INVESTOR = {
@@ -27,6 +31,10 @@ const EMAIL_TO_INVESTOR = {
   'alia@chicken-farm.com': { investorId: 6, investorName: 'عليا', role: 'investor' },
 }
 
+if (INITIAL_SUPER_ADMIN_EMAIL) {
+  EMAIL_TO_INVESTOR[INITIAL_SUPER_ADMIN_EMAIL] = { investorId: null, investorName: 'Super Admin', role: 'super_admin' };
+}
+
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
@@ -35,6 +43,13 @@ export function AuthProvider({ children }) {
   // Login with email and password
   async function login(email, password) {
     const result = await signInWithEmailAndPassword(auth, email, password)
+    // Log login activity
+    await addLog({
+      type: 'login',
+      message: `User logged in: ${email}`,
+      user: email,
+      uid: result.user.uid
+    })
     return result
   }
 
@@ -64,8 +79,19 @@ export function AuthProvider({ children }) {
 
   // Logout
   async function logout() {
+    const email = currentUser?.email
+    const uid = currentUser?.uid
+    await signOut(auth)
     setUserProfile(null)
-    return signOut(auth)
+    // Log logout activity
+    if (email) {
+      await addLog({
+        type: 'logout',
+        message: `User logged out: ${email}`,
+        user: email,
+        uid: uid
+      })
+    }
   }
 
   // Get user profile from Firestore

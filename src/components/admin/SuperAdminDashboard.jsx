@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../firebase/config';
-import { collection, query, onSnapshot, doc, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc } from 'firebase/firestore';
 import { formatNumber } from '../../utils/helpers';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { addInvestor, updateInvestor, deleteInvestor } from '../../firebase/firestore';
 
 import ActivityLog from './ActivityLog';
 import CategoryManager from './CategoryManager';
 import FamilyManager from './FamilyManager';
 import FinancialReports from './FinancialReports';
 
-function SuperAdminDashboard({ transactions, investors: investorsProp, calculations }) {
+function SuperAdminDashboard({ transactions, investors: investorsProp, calculations, chickenInventory, feedInventory, archives }) {
   const { t } = useLanguage();
+  const { userProfile } = useAuth();
   const [localInvestors, setLocalInvestors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -30,7 +33,7 @@ function SuperAdminDashboard({ transactions, investors: investorsProp, calculati
   const handleDeleteInvestor = async (id) => {
     if (window.confirm(t.superAdmin.confirmDelete)) {
       try {
-        await deleteDoc(doc(db, 'investors', id));
+        await deleteInvestor(id, userProfile?.email);
       } catch (error) {
         console.error("Error deleting investor:", error);
         alert(t.common.error);
@@ -42,19 +45,18 @@ function SuperAdminDashboard({ transactions, investors: investorsProp, calculati
     e.preventDefault();
     try {
       if (editingInvestor) {
-        await updateDoc(doc(db, 'investors', String(editingInvestor.id)), {
+        await updateInvestor(editingInvestor.id, {
           ...newInvestor,
           initialCapital: parseFloat(newInvestor.initialCapital),
           currentCapital: parseFloat(newInvestor.initialCapital),
-        });
+        }, userProfile?.email);
         setEditingInvestor(null);
       } else {
-        await addDoc(collection(db, 'investors'), {
+        await addInvestor({
           ...newInvestor,
           initialCapital: parseFloat(newInvestor.initialCapital),
           currentCapital: parseFloat(newInvestor.initialCapital),
-          createdAt: new Date().toISOString()
-        });
+        }, userProfile?.email);
       }
       setShowAddModal(false);
       setNewInvestor({ name: '', initialCapital: 0, email: '', role: 'investor' });
@@ -140,6 +142,9 @@ function SuperAdminDashboard({ transactions, investors: investorsProp, calculati
         totalExpenses={calculations.totalExpenses}
         totalContributions={calculations.totalContributions}
         totalEggs={calculations.totalEggs}
+        chickenInventory={chickenInventory}
+        feedInventory={feedInventory}
+        archives={archives}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
