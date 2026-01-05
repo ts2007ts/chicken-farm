@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 function EditTransactionForm({ transaction, categories, investors, onSubmit, onClose }) {
+  const { t } = useLanguage()
   const [amount, setAmount] = useState(transaction.amount.toString())
   const [note, setNote] = useState(transaction.note || '')
   const [date, setDate] = useState(transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
@@ -26,7 +28,7 @@ function EditTransactionForm({ transaction, categories, investors, onSubmit, onC
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-gray-700 mb-2">التاريخ</label>
+        <label className="block text-gray-700 mb-2">{t.common.date}</label>
         <input
           type="date"
           value={date}
@@ -37,7 +39,7 @@ function EditTransactionForm({ transaction, categories, investors, onSubmit, onC
       </div>
       {transaction.type === 'expense' ? (
         <div>
-          <label className="block text-gray-700 mb-2">الفئة</label>
+          <label className="block text-gray-700 mb-2">{t.expenses.category}</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -50,7 +52,7 @@ function EditTransactionForm({ transaction, categories, investors, onSubmit, onC
         </div>
       ) : (
         <div>
-          <label className="block text-gray-700 mb-2">المستثمر</label>
+          <label className="block text-gray-700 mb-2">{t.superAdmin.investorName}</label>
           <select
             value={selectedInvestor}
             onChange={(e) => setSelectedInvestor(parseInt(e.target.value))}
@@ -63,23 +65,23 @@ function EditTransactionForm({ transaction, categories, investors, onSubmit, onC
         </div>
       )}
       <div>
-        <label className="block text-gray-700 mb-2">المبلغ (ل.س)</label>
+        <label className="block text-gray-700 mb-2">{t.common.amount} ({t.common.currency})</label>
         <input
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="أدخل المبلغ"
+          placeholder={t.common.amount}
           className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           required
         />
       </div>
       <div>
-        <label className="block text-gray-700 mb-2">ملاحظة</label>
+        <label className="block text-gray-700 mb-2">{t.common.notes}</label>
         <input
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="ملاحظة اختيارية"
+          placeholder={t.common.notes}
           className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
       </div>
@@ -87,7 +89,7 @@ function EditTransactionForm({ transaction, categories, investors, onSubmit, onC
         type="submit"
         className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg font-bold hover:from-blue-600 hover:to-blue-700 transition-all"
       >
-        حفظ التعديلات
+        {t.common.update}
       </button>
     </form>
   )

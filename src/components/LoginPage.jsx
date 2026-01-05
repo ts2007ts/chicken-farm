@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 
 function LoginPage() {
+  const { t, language } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -21,15 +23,15 @@ function LoginPage() {
     } catch (err) {
       console.error(err)
       if (err.code === 'auth/user-not-found') {
-        setError('البريد الإلكتروني غير مسجل')
+        setError(t.login.errorUserNotFound)
       } else if (err.code === 'auth/wrong-password') {
-        setError('كلمة المرور غير صحيحة')
+        setError(t.login.errorWrongPassword)
       } else if (err.code === 'auth/invalid-email') {
-        setError('البريد الإلكتروني غير صالح')
+        setError(t.login.errorInvalidEmail)
       } else if (err.code === 'auth/invalid-credential') {
-        setError('بيانات الدخول غير صحيحة')
+        setError(t.login.errorInvalidCredential)
       } else {
-        setError('حدث خطأ في تسجيل الدخول')
+        setError(t.login.errorGeneral)
       }
     }
 
@@ -46,7 +48,7 @@ function LoginPage() {
       setEmailSent(true)
     } catch (err) {
       console.error(err)
-      setError('حدث خطأ في إرسال رابط الدخول')
+      setError(t.login.errorLinkSend)
     }
 
     setLoading(false)
@@ -54,23 +56,23 @@ function LoginPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
           <div className="text-6xl mb-4">📧</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">تم إرسال رابط الدخول</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t.login.linkSentTitle}</h2>
           <p className="text-gray-600 mb-6">
-            تم إرسال رابط تسجيل الدخول إلى بريدك الإلكتروني
+            {t.login.linkSentBody}
             <br />
             <span className="font-bold text-amber-600">{email}</span>
           </p>
           <p className="text-sm text-gray-500">
-            افتح بريدك الإلكتروني واضغط على الرابط للدخول
+            {t.login.linkSentInstruction}
           </p>
           <button
             onClick={() => setEmailSent(false)}
             className="mt-6 text-amber-600 hover:text-amber-700 font-medium"
           >
-            ← العودة
+            {language === 'ar' ? '← ' : '→ '}{t.common.return}
           </button>
         </div>
       </div>
@@ -78,13 +80,13 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🐔</div>
-          <h1 className="text-2xl font-bold text-gray-800">مزرعة الدجاج</h1>
-          <p className="text-gray-500 mt-2">نظام إدارة المزرعة والمستثمرين</p>
+          <h1 className="text-2xl font-bold text-gray-800">{t.login.title}</h1>
+          <p className="text-gray-500 mt-2">{t.login.subtitle}</p>
         </div>
 
         {/* Login Method Toggle */}
@@ -97,7 +99,7 @@ function LoginPage() {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            كلمة المرور
+            {t.login.methodPassword}
           </button>
           <button
             onClick={() => setLoginMethod('link')}
@@ -107,7 +109,7 @@ function LoginPage() {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            رابط البريد
+            {t.login.methodLink}
           </button>
         </div>
 
@@ -122,26 +124,26 @@ function LoginPage() {
         <form onSubmit={loginMethod === 'password' ? handlePasswordLogin : handleEmailLinkLogin}>
           <div className="space-y-4">
             <div>
-              <label className="block text-gray-700 mb-2 font-medium">البريد الإلكتروني</label>
+              <label className="block text-gray-700 mb-2 font-medium">{t.common.email}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="example@email.com"
+                placeholder={t.login.emailPlaceholder}
                 required
               />
             </div>
 
             {loginMethod === 'password' && (
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">كلمة المرور</label>
+                <label className="block text-gray-700 mb-2 font-medium">{t.common.password}</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder={t.login.passwordPlaceholder}
                   required
                 />
               </div>
@@ -158,12 +160,12 @@ function LoginPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  جاري التحميل...
+                  {t.common.loading}
                 </span>
               ) : loginMethod === 'password' ? (
-                'تسجيل الدخول'
+                t.login.submitPassword
               ) : (
-                'إرسال رابط الدخول'
+                t.login.submitLink
               )}
             </button>
           </div>
@@ -172,9 +174,9 @@ function LoginPage() {
         {/* Info */}
         <div className="mt-6 text-center text-sm text-gray-500">
           {loginMethod === 'link' ? (
-            <p>سيتم إرسال رابط تسجيل الدخول إلى بريدك الإلكتروني</p>
+            <p>{t.login.infoLink}</p>
           ) : (
-            <p>أدخل بيانات حسابك للدخول</p>
+            <p>{t.login.infoPassword}</p>
           )}
         </div>
       </div>

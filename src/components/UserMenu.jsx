@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 
 function UserMenu() {
-  const [showMenu, setShowMenu] = useState(false)
-  const { currentUser, userProfile, logout, isAdmin } = useAuth()
+  const { currentUser, logout, userProfile } = useAuth()
+  const { t, language, toggleLanguage } = useLanguage()
+  const [isOpen, setIsOpen] = useState(false)
 
   async function handleLogout() {
     try {
@@ -16,55 +18,45 @@ function UserMenu() {
   return (
     <div className="relative">
       <button
-        onClick={() => setShowMenu(!showMenu)}
-        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg transition-all"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 p-1.5 sm:p-2 rounded-lg transition-all"
       >
-        <div className="w-8 h-8 bg-white/30 rounded-full flex items-center justify-center">
-          {userProfile?.investorName ? userProfile.investorName.charAt(0) : '👤'}
+        <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center font-bold text-white shadow-inner">
+          {userProfile?.investorName?.charAt(0) || currentUser?.email?.charAt(0).toUpperCase()}
         </div>
-        <span className="hidden sm:inline text-sm">
-          {userProfile?.investorName || currentUser?.email?.split('@')[0]}
-        </span>
-        {isAdmin() && (
-          <span className="bg-amber-300 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold">
-            مدير
-          </span>
-        )}
+        <div className={`hidden sm:block text-${language === 'ar' ? 'right' : 'left'}`}>
+          <p className="text-sm font-bold leading-tight">{userProfile?.investorName || t.common.login}</p>
+          <p className="text-[10px] text-amber-100 opacity-80">{userProfile?.role === 'super_admin' ? t.common.superAdmin : userProfile?.role === 'admin' ? t.superAdmin.admin : t.superAdmin.investor}</p>
+        </div>
       </button>
 
-      {showMenu && (
+      {isOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setShowMenu(false)}
-          />
-          <div className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-xl z-50 min-w-48 overflow-hidden" dir="rtl">
-            <div className="p-4 border-b border-gray-100">
-              <p className="font-bold text-gray-800">
-                {userProfile?.investorName || 'مستخدم'}
-              </p>
-              <p className="text-sm text-gray-500">{currentUser?.email}</p>
-              {isAdmin() && (
-                <span className="inline-block mt-2 bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">
-                  صلاحيات المدير
-                </span>
-              )}
-              {!isAdmin() && userProfile?.investorName && (
-                <span className="inline-block mt-2 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
-                  مستثمر
-                </span>
-              )}
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
+          <div className={`absolute ${language === 'ar' ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20 overflow-hidden`}>
+            <div className="px-4 py-3 border-b border-gray-50">
+              <p className="text-sm font-bold text-gray-800">{userProfile?.investorName}</p>
+              <p className="text-xs text-gray-500 truncate">{currentUser?.email}</p>
             </div>
             
-            <div className="p-2">
-              <button
-                onClick={handleLogout}
-                className="w-full text-right px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <span>🚪</span>
-                <span>تسجيل الخروج</span>
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                toggleLanguage()
+                setIsOpen(false)
+              }}
+              className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'} px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 transition-colors flex items-center justify-between`}
+            >
+              <span>{language === 'ar' ? 'English (EN)' : 'Arabic (عربي)'}</span>
+              <span>🌐</span>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'} px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center justify-between`}
+            >
+              <span>{t.common.logout}</span>
+              <span>🚪</span>
+            </button>
           </div>
         </>
       )}

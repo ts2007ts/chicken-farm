@@ -15,20 +15,40 @@ import InvestorList from './investors/InvestorList'
 import TransactionList from './transactions/TransactionList'
 import EggManagement from './eggs/EggManagement'
 import InventoryTab from './inventory/InventoryTab'
+import SuperAdminDashboard from './admin/SuperAdminDashboard'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import { useAppData } from '../hooks/useAppData'
 import { useCalculations } from '../hooks/useCalculations'
 import { useFilters } from '../hooks/useFilters'
 import { useActions } from '../hooks/useActions'
 import { useModals } from '../hooks/useModals'
 
-function MainContent({ activeTab }) {
-  const { currentUser, userProfile, isAdmin } = useAuth()
+function MainContent({ activeTab, showImportExportModal, setShowImportExportModal }) {
+  const { currentUser, userProfile, isAdmin, isSuperAdmin } = useAuth()
+  const { t, language } = useLanguage()
   const { investors, transactions, eggs, loading } = useAppData(currentUser)
   const calculations = useCalculations(investors, transactions, eggs)
   const filters = useFilters(transactions)
   const actions = useActions(investors, userProfile)
   const modals = useModals()
+
+  // Sync external showImportExportModal prop with local modal state if needed
+  useEffect(() => {
+    if (showImportExportModal !== undefined) {
+      modals.setShowImportExportModal(showImportExportModal)
+    }
+  }, [showImportExportModal])
+
+  // Sync back to parent if local state changes
+  useEffect(() => {
+    if (setShowImportExportModal) {
+      setShowImportExportModal(modals.showImportExportModal)
+    }
+  }, [modals.showImportExportModal])
+
+  const categories = EXPENSE_CATEGORIES(t)
+
 
   const [selectedInvestorForDetails, setSelectedInvestorForDetails] = useState(null)
 
@@ -53,10 +73,15 @@ function MainContent({ activeTab }) {
 
   return (
     <>
+      {activeTab === 'super_admin' && isSuperAdmin() && (
+        <SuperAdminDashboard />
+      )}
+
       {activeTab === 'dashboard' && (
         <Dashboard 
           {...calculations}
           investors={investors}
+          categories={categories}
           filteredTransactions={filters.filteredTransactions}
           setShowCapitalModal={modals.setShowCapitalModal}
           setShowExpenseModal={modals.setShowExpenseModal}
@@ -80,6 +105,7 @@ function MainContent({ activeTab }) {
       {activeTab === 'expenses' && (
         <TransactionList 
           transactions={transactions}
+          categories={categories}
           {...filters}
           setShowExpenseModal={modals.setShowExpenseModal}
           setShowContributionModal={modals.setShowContributionModal}
@@ -91,6 +117,7 @@ function MainContent({ activeTab }) {
       {activeTab === 'eggs' && (
         <EggManagement 
           totalEggs={calculations.totalEggs}
+          getInvestorEggs={calculations.getInvestorEggs}
           getFamilyEggs={calculations.getFamilyEggs}
           eggs={eggs}
           isAdmin={isAdmin}
@@ -105,6 +132,7 @@ function MainContent({ activeTab }) {
           {...calculations}
           transactions={transactions}
           investors={investors}
+          categories={categories}
           selectedInvestorForDetails={selectedInvestorForDetails}
           setSelectedInvestorForDetails={setSelectedInvestorForDetails}
           isAdmin={isAdmin}
@@ -114,7 +142,7 @@ function MainContent({ activeTab }) {
 
       {/* Modals */}
       {modals.showCapitalModal && (
-        <Modal title="تعيين رأس المال" onClose={() => modals.setShowCapitalModal(false)}>
+        <Modal title={t.dashboard.setCapital} onClose={() => modals.setShowCapitalModal(false)}>
           <CapitalForm 
             investors={investors} 
             onSubmit={actions.handleSetCapital} 
@@ -124,9 +152,9 @@ function MainContent({ activeTab }) {
       )}
 
       {modals.showExpenseModal && (
-        <Modal title="إضافة مصروف" onClose={() => modals.setShowExpenseModal(false)}>
+        <Modal title={t.dashboard.addExpense} onClose={() => modals.setShowExpenseModal(false)}>
           <ExpenseForm 
-            categories={EXPENSE_CATEGORIES} 
+            categories={categories} 
             onSubmit={actions.handleAddExpense} 
             onClose={() => modals.setShowExpenseModal(false)} 
           />
@@ -134,7 +162,7 @@ function MainContent({ activeTab }) {
       )}
 
       {modals.showContributionModal && (
-        <Modal title="إضافة للرأسمال" onClose={() => modals.setShowContributionModal(false)}>
+        <Modal title={t.dashboard.addContribution} onClose={() => modals.setShowContributionModal(false)}>
           <ContributionForm 
             investors={investors} 
             onSubmit={actions.handleAddContribution} 
@@ -144,7 +172,7 @@ function MainContent({ activeTab }) {
       )}
 
       {modals.showEggModal && (
-        <Modal title="تسجيل بيض" onClose={() => modals.setShowEggModal(false)}>
+        <Modal title={t.dashboard.recordEggs} onClose={() => modals.setShowEggModal(false)}>
           <EggForm 
             onSubmit={actions.handleAddEggs} 
             onClose={() => modals.setShowEggModal(false)} 
@@ -153,7 +181,7 @@ function MainContent({ activeTab }) {
       )}
 
       {modals.showImportExportModal && (
-        <Modal title="استيراد / تصدير البيانات" onClose={() => modals.setShowImportExportModal(false)}>
+        <Modal title={t.common.importExport} onClose={() => modals.setShowImportExportModal(false)}>
           <ImportExportForm 
             onExport={actions.handleExportData} 
             onImport={actions.handleImportData} 
@@ -163,7 +191,7 @@ function MainContent({ activeTab }) {
       )}
 
       {modals.settlementInvestor && (
-        <Modal title={`تصفية حساب ${modals.settlementInvestor.name}`} onClose={() => modals.setSettlementInvestor(null)}>
+        <Modal title={`${t.investors.settleReceive} - ${modals.settlementInvestor.name}`} onClose={() => modals.setSettlementInvestor(null)}>
           <SettlementForm 
             investor={modals.settlementInvestor}
             balance={calculations.getInvestorBalance(modals.settlementInvestor)}
@@ -177,10 +205,10 @@ function MainContent({ activeTab }) {
       )}
 
       {modals.editingTransaction && (
-        <Modal title="تعديل المعاملة" onClose={() => modals.setEditingTransaction(null)}>
+        <Modal title={t.common.edit} onClose={() => modals.setEditingTransaction(null)}>
           <EditTransactionForm 
             transaction={modals.editingTransaction}
-            categories={EXPENSE_CATEGORIES}
+            categories={categories}
             investors={investors}
             onSubmit={(updates) => {
               actions.handleEditTransaction(modals.editingTransaction.id, updates)

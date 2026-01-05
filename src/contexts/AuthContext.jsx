@@ -18,7 +18,7 @@ export function useAuth() {
 
 // Map emails to investors - أضف إيميل كل مستثمر هنا
 const EMAIL_TO_INVESTOR = {
-  'tarekyaghi757@gmail.com': { investorId: 4, investorName: 'طارق', role: 'admin' },
+  'tarekyaghi757@gmail.com': { investorId: 4, investorName: 'طارق', role: 'super_admin' },
   'sara91abboud@gmail.com': { investorId: 5, investorName: 'سارا', role: 'admin' },
   // أضف إيميلات المستثمرين الآخرين هنا:
   'loay@chicken-farm.com': { investorId: 1, investorName: 'لؤي', role: 'investor' },
@@ -83,9 +83,14 @@ export function AuthProvider({ children }) {
     setUserProfile(prev => ({ ...prev, ...data }))
   }
 
+  // Check if user is super admin
+  function isSuperAdmin() {
+    return userProfile?.role === 'super_admin'
+  }
+
   // Check if user is admin
   function isAdmin() {
-    return userProfile?.role === 'admin'
+    return userProfile?.role === 'admin' || isSuperAdmin()
   }
 
   // Check if user can edit specific investor data
@@ -119,6 +124,13 @@ export function AuthProvider({ children }) {
               createdAt: new Date().toISOString()
             }
             await setDoc(doc(db, 'users', user.uid), profile)
+          } else {
+            // Update role if it changed in EMAIL_TO_INVESTOR
+            const investorInfo = EMAIL_TO_INVESTOR[user.email];
+            if (investorInfo && investorInfo.role !== profile.role) {
+              profile.role = investorInfo.role;
+              await setDoc(doc(db, 'users', user.uid), { role: investorInfo.role }, { merge: true });
+            }
           }
           
           setUserProfile(profile)
@@ -153,6 +165,7 @@ export function AuthProvider({ children }) {
     completeEmailLinkSignIn,
     updateUserProfile,
     isAdmin,
+    isSuperAdmin,
     canEditInvestor,
     canEditGeneral
   }

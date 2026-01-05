@@ -157,7 +157,7 @@ export function useActions(investors, userProfile) {
     try {
       const data = JSON.parse(jsonData)
       const results = await importAllData(data)
-      alert(`تم استيراد البيانات بنجاح!\n\n✅ ${results.investors} مستثمر\n✅ ${results.transactions} معاملة\n✅ ${results.eggs} سجل بيض`)
+      alert(`تم استيراد البيانات بنجاح!\n\n✅ ${results.investors} مستثمر\n✅ ${results.users} مستخدم\n✅ ${results.transactions} معاملة\n✅ ${results.eggs} سجل بيض`)
     } catch (error) {
       console.error('Import error:', error)
       alert('خطأ في قراءة الملف. تأكد من صحة الملف.')

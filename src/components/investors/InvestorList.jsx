@@ -1,4 +1,5 @@
-import { formatNumber, formatBalance } from '../../utils/helpers'
+import { formatNumber, formatDate, formatBalance } from '../../utils/helpers'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 function InvestorList({ 
   investors, 
@@ -9,12 +10,14 @@ function InvestorList({
   isAdmin, 
   userProfile 
 }) {
+  const { t } = useLanguage()
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800">المستثمرين</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800">{t.investors.title}</h2>
         <button onClick={() => setShowCapitalModal(true)} className="bg-amber-500 hover:bg-amber-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-all text-sm sm:text-base w-full sm:w-auto">
-          تعيين رأس المال
+          {t.investors.setCapital}
         </button>
       </div>
       <div className="grid gap-4 sm:gap-6">
@@ -27,22 +30,22 @@ function InvestorList({
                 </div>
                 <div>
                   <h3 className="font-bold text-base sm:text-lg text-gray-800">{investor.name}</h3>
-                  <p className="text-gray-500 text-xs sm:text-sm">نسبة الحصة: {getInvestorShare(investor)}%</p>
+                  <p className="text-gray-500 text-xs sm:text-sm">{t.investors.shareRatio}: {getInvestorShare(investor)}%</p>
                 </div>
               </div>
               <div className="text-right sm:text-left w-full sm:w-auto">
-                <p className="text-gray-500 text-xs sm:text-sm">رأس المال الحالي</p>
-                <p className="text-lg sm:text-xl font-bold text-amber-600">{formatNumber(investor.initialCapital)} ل.س</p>
+                <p className="text-gray-500 text-xs sm:text-sm">{t.investors.currentCapital}</p>
+                <p className="text-lg sm:text-xl font-bold text-amber-600">{formatNumber(investor.initialCapital)} {t.common.currency}</p>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4 text-center">
               <div>
-                <p className="text-gray-500 text-sm">رأس المال الأولي</p>
+                <p className="text-gray-500 text-sm">{t.investors.initialCapital}</p>
                 <p className="font-bold text-gray-800">{formatNumber(investor.initialCapital)}</p>
               </div>
               <div>
-                <p className="text-gray-500 text-sm">الرصيد المتوقع</p>
-                <p className={`font-bold ${formatBalance(getInvestorBalance(investor)).isNegative ? 'text-red-600' : 'text-green-600'}`}>{formatBalance(getInvestorBalance(investor)).text} ل.س</p>
+                <p className="text-gray-500 text-sm">{t.investors.expectedBalance}</p>
+                <p className={`font-bold ${formatBalance(getInvestorBalance(investor)).isNegative ? 'text-red-600' : 'text-green-600'}`}>{formatBalance(getInvestorBalance(investor)).text} {t.common.currency}</p>
               </div>
             </div>
             {parseFloat(getInvestorBalance(investor)) !== 0 && (isAdmin() || userProfile?.investorId === investor.id) && (
@@ -56,8 +59,8 @@ function InvestorList({
                   }`}
                 >
                   {parseFloat(getInvestorBalance(investor)) > 0
-                    ? '💰 تصفية (استلام من الصندوق)'
-                    : '💳 تصفية (دفع للصندوق)'}
+                    ? t.investors.settleReceive
+                    : t.investors.settlePay}
                 </button>
               </div>
             )}

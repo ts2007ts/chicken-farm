@@ -1,14 +1,23 @@
-export const formatDate = (dateString) => {
+import { ar } from '../translations/ar';
+import { en } from '../translations/en';
+
+export const formatDate = (dateString, language = 'ar') => {
   const date = new Date(dateString)
   const day = date.getDate().toString().padStart(2, '0')
-  const months = [
-    'كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران',
-    'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'
-  ]
-  const month = months[date.getMonth()]
   const year = date.getFullYear()
-  // Add Unicode LRM (Left-to-Right Mark) to ensure correct order in RTL layouts
-  return `\u200E${day}/${month}/${year}`
+  
+  if (language === 'ar') {
+    const months = [
+      'كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران',
+      'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'
+    ]
+    const month = months[date.getMonth()]
+    return `\u200E${day}/${month}/${year}`
+  } else {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const month = months[date.getMonth()]
+    return `${day} ${month} ${year}`
+  }
 }
 
 export const formatDateForInput = (dateString) => {

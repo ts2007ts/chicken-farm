@@ -151,7 +151,7 @@ export function subscribeToUsers(callback) {
 
 // ============ BULK IMPORT/EXPORT ============
 export async function importAllData(data) {
-  const results = { investors: 0, transactions: 0, eggs: 0 }
+  const results = { investors: 0, transactions: 0, eggs: 0, users: 0 }
   
   // Import investors
   if (data.investors && Array.isArray(data.investors)) {
@@ -163,6 +163,21 @@ export async function importAllData(data) {
         updatedAt: serverTimestamp()
       })
       results.investors++
+    }
+  }
+
+  // Import users (emails and roles)
+  if (data.users && Array.isArray(data.users)) {
+    for (const user of data.users) {
+      const { uid, ...userData } = user
+      if (uid) {
+        const docRef = doc(db, COLLECTIONS.USERS, uid)
+        await setDoc(docRef, {
+          ...userData,
+          updatedAt: serverTimestamp()
+        }, { merge: true })
+        results.users++
+      }
     }
   }
   
@@ -198,14 +213,18 @@ export async function exportAllData() {
   const investors = await getInvestors()
   const transactions = await getTransactions()
   const eggs = await getEggs()
+  const usersSnapshot = await getDocs(collection(db, COLLECTIONS.USERS))
+  const users = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))
   
   return {
-    investors: investors.map(inv => ({
-      id: inv.id,
-      name: inv.name,
-      initialCapital: inv.initialCapital,
-      currentCapital: inv.currentCapital
-    })),
+    investors: investors.map(inv => {
+      const { createdAt, updatedAt, ...rest } = inv
+      return rest
+    }),
+    users: users.map(u => {
+      const { createdAt, updatedAt, ...rest } = u
+      return rest
+    }),
     transactions: transactions.map(t => {
       const { createdAt, updatedAt, importedAt, ...rest } = t
       return rest
@@ -215,7 +234,7 @@ export async function exportAllData() {
       return rest
     }),
     exportDate: new Date().toISOString(),
-    version: '1.0'
+    version: '1.1'
   }
 }
 

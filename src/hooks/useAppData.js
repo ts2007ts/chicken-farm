@@ -19,8 +19,10 @@ export function useAppData(currentUser) {
       return
     }
 
-    // Initialize investors in Firestore if they don't exist
-    initializeInvestors(INITIAL_INVESTORS)
+    // Initialize investors in Firestore ONLY if they don't exist and we have initial data (now empty)
+    if (INITIAL_INVESTORS.length > 0) {
+      initializeInvestors(INITIAL_INVESTORS)
+    }
 
     // Subscribe to real-time updates
     const unsubInvestors = subscribeToInvestors((data) => {

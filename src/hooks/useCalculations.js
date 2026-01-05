@@ -43,14 +43,11 @@ export function useCalculations(investors, transactions, eggs) {
   }
 
   const getInvestorEggs = (investor) => {
-    const family = FAMILIES.find(f => f.members.includes(investor.id))
-    if (!family) return 0
-    const familyShare = Math.floor(totalEggs / 3)
-    return familyShare
+    return Math.floor(totalEggs / Math.max(1, investors.length))
   }
 
   const getFamilyEggs = (familyId) => {
-    return Math.floor(totalEggs / 3)
+    return Math.floor(totalEggs / Math.max(1, investors.length))
   }
 
   return {

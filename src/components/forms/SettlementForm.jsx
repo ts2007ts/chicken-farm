@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { formatNumber } from '../../utils/helpers'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 function SettlementForm({ investor, balance, onSubmit, onClose }) {
   const { isAdmin } = useAuth()
+  const { t } = useLanguage()
   
   // Only admin can settle
   if (!isAdmin()) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">فقط المدير يمكنه إجراء التصفية.</p>
+        <p className="text-gray-500">{t.common.error}: Only admin can perform settlement.</p>
       </div>
     )
   }
@@ -34,19 +36,19 @@ function SettlementForm({ investor, balance, onSubmit, onClose }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className={`p-4 rounded-lg ${isPositive ? 'bg-green-50' : 'bg-red-50'}`}>
-        <p className="text-sm text-gray-600 mb-1">الرصيد الحالي:</p>
+        <p className="text-sm text-gray-600 mb-1">{t.investors.expectedBalance}:</p>
         <p className={`text-2xl font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-          {isPositive ? '' : '-'}{Math.round(absBalance / 1000) * 1000} ل.س
+          {isPositive ? '' : '-'}{Math.round(absBalance / 1000) * 1000} {t.common.currency}
         </p>
         <p className="text-sm text-gray-500 mt-2">
           {isPositive 
-            ? `💰 ${isFemale ? 'المستثمرة لها' : 'المستثمر له'} رصيد في الصندوق (${isFemale ? 'تستلم' : 'يستلم'})` 
-            : `💳 ${isFemale ? 'المستثمرة عليها' : 'المستثمر عليه'} مبلغ للصندوق (${isFemale ? 'تدفع' : 'يدفع'})`}
+            ? `💰 ${investor.name} ${isFemale ? 'تستحق' : 'يستحق'} استلام رصيد` 
+            : `💳 ${investor.name} ${isFemale ? 'يجب عليها' : 'يجب عليه'} دفع مبلغ للصندوق`}
         </p>
       </div>
 
       <div>
-        <label className="block text-gray-700 mb-2">التاريخ</label>
+        <label className="block text-gray-700 mb-2">{t.common.date}</label>
         <input
           type="date"
           value={date}
@@ -57,25 +59,24 @@ function SettlementForm({ investor, balance, onSubmit, onClose }) {
       </div>
 
       <div>
-        <label className="block text-gray-700 mb-2">المبلغ (ل.س)</label>
+        <label className="block text-gray-700 mb-2">{t.common.amount} ({t.common.currency})</label>
         <input
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="أدخل المبلغ"
+          placeholder={t.common.amount}
           className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           required
         />
-        <p className="text-xs text-gray-500 mt-1">يمكنك تعديل المبلغ للتصفية الجزئية</p>
       </div>
 
       <div>
-        <label className="block text-gray-700 mb-2">ملاحظة</label>
+        <label className="block text-gray-700 mb-2">{t.common.notes}</label>
         <input
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="مثال: تصفية نهاية الشهر"
+          placeholder={t.common.notes}
           className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
       </div>
@@ -88,7 +89,7 @@ function SettlementForm({ investor, balance, onSubmit, onClose }) {
             : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
         } text-white`}
       >
-        {isPositive ? '💰 تأكيد الاستلام من الصندوق' : '💳 تأكيد الدفع للصندوق'}
+        {isPositive ? t.investors.settleReceive : t.investors.settlePay}
       </button>
     </form>
   )
