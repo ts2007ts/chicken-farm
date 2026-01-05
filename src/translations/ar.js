@@ -103,6 +103,10 @@ export const ar = {
     pending: 'بانتظار الاستلام ⏳',
     recipient: 'المستلم',
     confirmDelivery: 'تأكيد استلام العائلة',
+    rejectDelivery: 'رفض الاستلام (تحويل لمبلغ مالي)',
+    rejectedEggContribution: 'قيمة بيض مرفوض من عائلة',
+    eggPrice: 'ثمن البيضة الواحدة',
+    memberCount: 'عدد أفراد العائلة',
     family1: 'عائلة 1',
     family2: 'عائلة 2',
     family3: 'عائلة 3',
@@ -144,6 +148,12 @@ export const ar = {
     confirmDelete: 'هل أنت متأكد من حذف هذا المستثمر؟ سيؤدي ذلك لحذف جميع بياناته.',
   },
   categories: {
+    title: 'إدارة فئات المصاريف',
+    placeholder: 'اسم الفئة الجديد',
+    noCustom: 'لا توجد فئات مخصصة. اضغط للبدء بالفئات الافتراضية.',
+    initDefaults: 'البدء بالفئات الافتراضية',
+    editTitle: 'تعديل الفئة',
+    selectIcon: 'اختر أيقونة',
     feed: 'أعلاف',
     medicine: 'أدوية',
     electricity: 'كهرباء',
@@ -151,5 +161,8 @@ export const ar = {
     labor: 'عمالة',
     maintenance: 'صيانة',
     other: 'أخرى',
+  },
+  inventory: {
+    // ... rest of the inventory translations
   }
 };

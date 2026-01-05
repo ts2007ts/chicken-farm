@@ -111,7 +111,7 @@ function Dashboard({
                   <div>
                     <p className="font-medium text-gray-800">
                       {transaction.type === 'expense' 
-                        ? categories.find(c => c.id === transaction.category)?.name
+                        ? (t.categories[transaction.category] || categories.find(c => c.id === transaction.category)?.name)
                         : transaction.type === 'settlement'
                         ? `${t.common.edit} ${transaction.investorName} (${transaction.settlementType === 'receive' ? t.common.import : t.common.export})`
                         : `${t.dashboard.addContribution} ${transaction.investorName}`}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { EXPENSE_CATEGORIES } from '../constants'
+import { FAMILIES, EXPENSE_CATEGORIES } from '../constants'
 import Modal from './Modal'
 import { 
   CapitalForm, 
@@ -27,11 +27,15 @@ import { useModals } from '../hooks/useModals'
 function MainContent({ activeTab, showImportExportModal, setShowImportExportModal }) {
   const { currentUser, userProfile, isAdmin, isSuperAdmin } = useAuth()
   const { t, language } = useLanguage()
-  const { investors, transactions, eggs, loading } = useAppData(currentUser)
-  const calculations = useCalculations(investors, transactions, eggs)
+  const { investors, transactions, eggs, settings, loading } = useAppData(currentUser)
+  const calculations = useCalculations(investors, transactions, eggs, settings)
   const filters = useFilters(transactions)
   const actions = useActions(investors, userProfile)
   const modals = useModals()
+
+  const handleAddEggsWithFamilies = (quantity, note) => {
+    actions.handleAddEggs(quantity, note, families)
+  }
 
   // Sync external showImportExportModal prop with local modal state if needed
   useEffect(() => {
@@ -47,7 +51,8 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
     }
   }, [modals.showImportExportModal])
 
-  const categories = EXPENSE_CATEGORIES(t)
+  const categories = settings?.expense_categories?.list || EXPENSE_CATEGORIES(t)
+  const families = settings?.family_settings?.list || FAMILIES(t)
 
 
   const [selectedInvestorForDetails, setSelectedInvestorForDetails] = useState(null)
@@ -74,7 +79,11 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
   return (
     <>
       {activeTab === 'super_admin' && isSuperAdmin() && (
-        <SuperAdminDashboard />
+        <SuperAdminDashboard 
+          investors={investors}
+          transactions={transactions}
+          calculations={calculations}
+        />
       )}
 
       {activeTab === 'dashboard' && (
@@ -120,9 +129,11 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
           getInvestorEggs={calculations.getInvestorEggs}
           getFamilyEggs={calculations.getFamilyEggs}
           eggs={eggs}
+          families={families}
           isAdmin={isAdmin}
           handleDeleteEgg={actions.handleDeleteEgg}
           handleConfirmEggDelivery={(eggId, familyId) => actions.handleConfirmEggDelivery(eggId, familyId, eggs)}
+          handleRejectEggDelivery={(eggId, familyId) => actions.handleRejectEggDelivery(eggId, familyId, eggs, families, settings)}
           setShowEggModal={modals.setShowEggModal}
         />
       )}
@@ -133,6 +144,7 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
           transactions={transactions}
           investors={investors}
           categories={categories}
+          families={families}
           selectedInvestorForDetails={selectedInvestorForDetails}
           setSelectedInvestorForDetails={setSelectedInvestorForDetails}
           isAdmin={isAdmin}
@@ -174,7 +186,7 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
       {modals.showEggModal && (
         <Modal title={t.dashboard.recordEggs} onClose={() => modals.setShowEggModal(false)}>
           <EggForm 
-            onSubmit={actions.handleAddEggs} 
+            onSubmit={handleAddEggsWithFamilies} 
             onClose={() => modals.setShowEggModal(false)} 
           />
         </Modal>

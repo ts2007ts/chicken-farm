@@ -103,6 +103,10 @@ export const en = {
     pending: 'Pending ⏳',
     recipient: 'Recipient',
     confirmDelivery: 'Confirm Family Delivery',
+    rejectDelivery: 'Reject Delivery (Convert to Cash)',
+    rejectedEggContribution: 'Rejected egg value from family',
+    eggPrice: 'Single Egg Price',
+    memberCount: 'Family Member Count',
     family1: 'Family 1',
     family2: 'Family 2',
     family3: 'Family 3',
@@ -144,6 +148,12 @@ export const en = {
     confirmDelete: 'Are you sure you want to delete this investor? This will delete all their data.',
   },
   categories: {
+    title: 'Expense Categories Management',
+    placeholder: 'New category name',
+    noCustom: 'No custom categories. Click to initialize with defaults.',
+    initDefaults: 'Initialize with Defaults',
+    editTitle: 'Edit Category',
+    selectIcon: 'Select Icon',
     feed: 'Feed',
     medicine: 'Medicine',
     electricity: 'Electricity',
@@ -151,5 +161,8 @@ export const en = {
     labor: 'Labor',
     maintenance: 'Maintenance',
     other: 'Other',
-  }
+  },
+  inventory: {
+    // ... rest of the inventory translations
+  },
 };

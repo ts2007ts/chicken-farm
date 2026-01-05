@@ -11,6 +11,8 @@ function InventoryTab({
   balance,
   transactions,
   investors,
+  categories,
+  families,
   getInvestorShare,
   getInvestorBalance,
   getInvestorContributions,
@@ -69,7 +71,7 @@ function InventoryTab({
       <div className="bg-white rounded-xl shadow-md p-6">
         <h3 className="font-bold text-gray-800 mb-4">{t.inventory.expenseBreakdown}</h3>
         <div className="space-y-3">
-          {EXPENSE_CATEGORIES(t).map(category => {
+          {categories.map(category => {
             const categoryTotal = transactions
               .filter(t => t.type === 'expense' && t.category === category.id)
               .reduce((sum, t) => sum + t.amount, 0)
@@ -180,12 +182,12 @@ function InventoryTab({
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">4️⃣ {t.inventory.settlementsIn}</span>
+                  <span className="text-gray-600">4️⃣ {t.investors.settlePay}</span>
                   <span className="font-bold text-purple-600">+{formatNumber(settlementsPaid)} {t.common.currency}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">5️⃣ {t.inventory.settlementsOut}</span>
+                  <span className="text-gray-600">5️⃣ {t.investors.settleReceive}</span>
                   <span className="font-bold text-purple-600">-{formatNumber(settlementsReceived)} {t.common.currency}</span>
                 </div>
                 
@@ -213,12 +215,12 @@ function InventoryTab({
       <div className="bg-white rounded-xl shadow-md p-6">
         <h3 className="font-bold text-gray-800 mb-4">{t.inventory.familyEggShares}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {FAMILIES(t).length > 0 ? FAMILIES(t).map(family => (
+          {families.length > 0 ? families.map(family => (
             <div key={family.id} className="bg-amber-50 rounded-lg p-4 text-center">
               <span className="text-3xl">{family.icon}</span>
               <p className="font-bold text-gray-800 mt-2">{family.name}</p>
               <p className="text-2xl font-bold text-amber-600">{formatNumber(getFamilyEggs(family.id))}</p>
-              <p className="text-sm text-gray-500">{t.eggs.egg} (33.33%)</p>
+              <p className="text-sm text-gray-500">{t.eggs.egg} ({((100 / families.length) || 0).toFixed(2)}%)</p>
             </div>
           )) : (
             <p className="text-gray-500 text-center col-span-full py-4">No family distribution data yet.</p>

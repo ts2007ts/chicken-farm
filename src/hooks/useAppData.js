@@ -4,13 +4,15 @@ import {
   subscribeToInvestors,
   subscribeToTransactions,
   subscribeToEggs,
-  initializeInvestors
+  initializeInvestors,
+  subscribeToSettings
 } from '../firebase/firestore'
 
 export function useAppData(currentUser) {
   const [investors, setInvestors] = useState(INITIAL_INVESTORS)
   const [transactions, setTransactions] = useState([])
   const [eggs, setEggs] = useState([])
+  const [settings, setSettings] = useState({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -42,14 +44,19 @@ export function useAppData(currentUser) {
       setEggs(data)
     })
 
+    const unsubSettings = subscribeToSettings((data) => {
+      setSettings(data)
+    })
+
     setLoading(false)
 
     return () => {
       unsubInvestors()
       unsubTransactions()
       unsubEggs()
+      unsubSettings()
     }
   }, [currentUser])
 
-  return { investors, transactions, eggs, loading }
+  return { investors, transactions, eggs, settings, loading }
 }

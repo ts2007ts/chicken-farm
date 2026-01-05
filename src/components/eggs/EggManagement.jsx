@@ -7,9 +7,11 @@ function EggManagement({
   getInvestorEggs,
   getFamilyEggs, 
   eggs, 
+  families,
   isAdmin, 
   handleDeleteEgg, 
   handleConfirmEggDelivery, 
+  handleRejectEggDelivery,
   setShowEggModal 
 }) {
   const { t, language } = useLanguage()
@@ -32,13 +34,13 @@ function EggManagement({
           <p className="text-gray-500">{t.eggs.totalEggs}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {FAMILIES(t).length > 0 ? (
-            FAMILIES(t).map(family => (
+          {families.length > 0 ? (
+            families.map(family => (
               <div key={family.id} className="bg-amber-50 rounded-lg p-4 text-center">
                 <span className="text-3xl">{family.icon}</span>
                 <p className="font-bold text-gray-800 mt-2">{family.name}</p>
                 <p className="text-2xl font-bold text-amber-600">{formatNumber(getFamilyEggs(family.id))}</p>
-                <p className="text-sm text-gray-500">{t.eggs.egg} (33.33%)</p>
+                <p className="text-sm text-gray-500">{t.eggs.egg} ({((100 / families.length) || 0).toFixed(2)}%)</p>
               </div>
             ))
           ) : (
@@ -73,11 +75,16 @@ function EggManagement({
                 </div>
                 {/* Simplified delivery display if families are empty */}
                 <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {FAMILIES(t).map(family => {
+                  {families.map(family => {
                     const delivery = egg.deliveries?.[family.id]
-                    const isDelivered = delivery?.delivered
+                    const isDelivered = delivery?.status === 'delivered' || delivery?.delivered === true
+                    const isRejected = delivery?.status === 'rejected'
                     return (
-                      <div key={family.id} className={`p-3 rounded-lg border ${isDelivered ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
+                      <div key={family.id} className={`p-3 rounded-lg border ${
+                        isDelivered ? 'bg-green-50 border-green-100' : 
+                        isRejected ? 'bg-red-50 border-red-100' : 
+                        'bg-gray-50 border-gray-100'
+                      }`}>
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
                             <span className="text-xl">{family.icon}</span>
@@ -85,6 +92,8 @@ function EggManagement({
                           </div>
                           {isDelivered ? (
                             <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">{t.eggs.delivered}</span>
+                          ) : isRejected ? (
+                            <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full">{t.eggs.rejectDelivery}</span>
                           ) : (
                             <span className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full">{t.eggs.pending}</span>
                           )}
@@ -92,20 +101,33 @@ function EggManagement({
                         <div className="text-[11px] text-gray-500 mb-3">
                           {isDelivered ? (
                             <>
-                              <p>{t.eggs.recipient}: {delivery.deliveredBy}</p>
+                              <p>{t.eggs.recipient}: {delivery.deliveredBy || delivery.confirmedBy}</p>
                               <p>{t.common.date}: {formatDate(delivery.deliveredAt, language)}</p>
                             </>
+                          ) : isRejected ? (
+                            <>
+                              <p className="text-red-600 font-bold">{t.common.amount}: {formatNumber(delivery.cashValue)} {t.common.currency}</p>
+                              <p>{t.common.date}: {formatDate(delivery.rejectedAt, language)}</p>
+                            </>
                           ) : (
-                            <p>{t.common.amount}: {formatNumber(Math.floor(egg.quantity / Math.max(1, FAMILIES.length)))} {t.eggs.egg}</p>
+                            <p>{t.common.amount}: {formatNumber(Math.floor(egg.quantity / Math.max(1, egg.familyCountAtProduction || families.length)))} {t.eggs.egg}</p>
                           )}
                         </div>
-                        {!isDelivered && isAdmin() && (
-                          <button 
-                            onClick={() => handleConfirmEggDelivery(egg.id, family.id)}
-                            className="w-full bg-green-500 hover:bg-green-600 text-white py-1.5 rounded-md text-xs font-bold transition-all"
-                          >
-                            {t.eggs.confirmDelivery}
-                          </button>
+                        {!isDelivered && !isRejected && isAdmin() && (
+                          <div className="flex flex-col gap-2">
+                            <button 
+                              onClick={() => handleConfirmEggDelivery(egg.id, family.id)}
+                              className="w-full bg-green-500 hover:bg-green-600 text-white py-1.5 rounded-md text-xs font-bold transition-all"
+                            >
+                              {t.eggs.confirmDelivery}
+                            </button>
+                            <button 
+                              onClick={() => handleRejectEggDelivery(egg.id, family.id)}
+                              className="w-full bg-red-500 hover:bg-red-600 text-white py-1.5 rounded-md text-xs font-bold transition-all"
+                            >
+                              {t.eggs.rejectDelivery}
+                            </button>
+                          </div>
                         )}
                       </div>
                     )

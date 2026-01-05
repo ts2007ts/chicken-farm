@@ -51,7 +51,7 @@ function TransactionList({
             return (
               <div key={category.id} className="bg-gray-50 rounded-lg p-3 text-center">
                 <span className="text-2xl">{category.icon}</span>
-                <p className="text-sm text-gray-600 mt-1">{category.name}</p>
+                <p className="text-sm text-gray-600 mt-1">{t.categories[category.id] || category.name}</p>
                 <p className="font-bold text-red-600">{formatNumber(categoryTotal)}</p>
               </div>
             )
@@ -89,9 +89,9 @@ function TransactionList({
                 <option value="all">{t.expenses.allCategories}</option>
                 <option value="expense">{t.common.expenses}</option>
                 <option value="contribution">{t.dashboard.contributions}</option>
-                <option value="settlement">تصفيات</option>
+                <option value="settlement">{language === 'ar' ? 'تصفيات' : 'Settlements'}</option>
                 {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  <option key={cat.id} value={cat.id}>{t.categories[cat.id] || cat.name}</option>
                 ))}
               </select>
             </div>
@@ -154,7 +154,7 @@ function TransactionList({
                     <div>
                       <p className="font-bold text-gray-800">
                         {transaction.type === 'expense' 
-                          ? categories.find(c => c.id === transaction.category)?.name
+                          ? (t.categories[transaction.category] || categories.find(c => c.id === transaction.category)?.name || (language === 'ar' ? 'فئة محذوفة' : 'Deleted Category'))
                           : transaction.type === 'settlement'
                           ? `${t.common.edit} ${transaction.investorName} (${transaction.settlementType === 'receive' ? t.common.import : t.common.export})`
                           : `${t.dashboard.addContribution} ${transaction.investorName}`}

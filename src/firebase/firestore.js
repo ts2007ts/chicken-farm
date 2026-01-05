@@ -19,7 +19,9 @@ const COLLECTIONS = {
   INVESTORS: 'investors',
   TRANSACTIONS: 'transactions',
   EGGS: 'eggs',
-  USERS: 'users'
+  USERS: 'users',
+  LOGS: 'logs',
+  SETTINGS: 'settings'
 }
 
 // ============ INVESTORS ============
@@ -146,6 +148,51 @@ export function subscribeToUsers(callback) {
   return onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
     const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))
     callback(users)
+  })
+}
+
+// ============ ACTIVITY LOGS ============
+export async function addLog(log) {
+  try {
+    await addDoc(collection(db, COLLECTIONS.LOGS), {
+      ...log,
+      timestamp: serverTimestamp()
+    })
+  } catch (error) {
+    console.error("Error adding log:", error)
+  }
+}
+
+export function subscribeToLogs(callback) {
+  const q = query(collection(db, COLLECTIONS.LOGS), orderBy('timestamp', 'desc'))
+  return onSnapshot(q, (snapshot) => {
+    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    callback(logs)
+  })
+}
+
+// ============ SETTINGS ============
+export async function getSettings() {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.SETTINGS))
+  const settings = {}
+  snapshot.docs.forEach(doc => {
+    settings[doc.id] = doc.data()
+  })
+  return settings
+}
+
+export async function updateSetting(id, data) {
+  const docRef = doc(db, COLLECTIONS.SETTINGS, id)
+  await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true })
+}
+
+export function subscribeToSettings(callback) {
+  return onSnapshot(collection(db, COLLECTIONS.SETTINGS), (snapshot) => {
+    const settings = {}
+    snapshot.docs.forEach(doc => {
+      settings[doc.id] = doc.data()
+    })
+    callback(settings)
   })
 }
 

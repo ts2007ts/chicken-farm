@@ -4,9 +4,14 @@ import { collection, query, onSnapshot, doc, deleteDoc, addDoc, updateDoc } from
 import { formatNumber } from '../../utils/helpers';
 import { useLanguage } from '../../contexts/LanguageContext';
 
-function SuperAdminDashboard() {
+import ActivityLog from './ActivityLog';
+import CategoryManager from './CategoryManager';
+import FamilyManager from './FamilyManager';
+import FinancialReports from './FinancialReports';
+
+function SuperAdminDashboard({ transactions, investors: investorsProp, calculations }) {
   const { t } = useLanguage();
-  const [investors, setInvestors] = useState([]);
+  const [localInvestors, setLocalInvestors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newInvestor, setNewInvestor] = useState({ name: '', initialCapital: 0, email: '', role: 'investor' });
@@ -16,7 +21,7 @@ function SuperAdminDashboard() {
     const q = query(collection(db, 'investors'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setInvestors(data);
+      setLocalInvestors(data);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -96,7 +101,7 @@ function SuperAdminDashboard() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {investors.map(investor => (
+            {localInvestors.map(investor => (
               <tr key={investor.id} className="hover:bg-amber-50 transition-colors">
                 <td className="px-6 py-4 font-medium">{investor.name}</td>
                 <td className="px-6 py-4 text-gray-500">{investor.email || 'N/A'}</td>
@@ -127,6 +132,20 @@ function SuperAdminDashboard() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <FinancialReports 
+        transactions={transactions} 
+        investors={localInvestors} 
+        totalExpenses={calculations.totalExpenses}
+        totalContributions={calculations.totalContributions}
+        totalEggs={calculations.totalEggs}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ActivityLog />
+        <CategoryManager />
+        <FamilyManager />
       </div>
 
       {showAddModal && (
