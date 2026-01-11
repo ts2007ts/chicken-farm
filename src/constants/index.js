@@ -1,24 +1,20 @@
-export const INITIAL_INVESTORS = [
-  { id: 1, name: 'لؤي', initialCapital: 0, currentCapital: 0, gender: 'male' },
-  { id: 2, name: 'مالك', initialCapital: 0, currentCapital: 0, gender: 'male' },
-  { id: 3, name: 'وداد', initialCapital: 0, currentCapital: 0, gender: 'female' },
-  { id: 4, name: 'طارق', initialCapital: 0, currentCapital: 0, gender: 'male' },
-  { id: 5, name: 'سارا', initialCapital: 0, currentCapital: 0, gender: 'female' },
-  { id: 6, name: 'عليا', initialCapital: 0, currentCapital: 0, gender: 'female' },
-]
+import { ar } from '../translations/ar';
+import { en } from '../translations/en';
 
-export const EXPENSE_CATEGORIES = [
-  { id: 'feed', name: 'أعلاف', icon: '🌾' },
-  { id: 'medicine', name: 'أدوية', icon: '💊' },
-  { id: 'electricity', name: 'كهرباء', icon: '⚡' },
-  { id: 'water', name: 'ماء', icon: '💧' },
-  { id: 'labor', name: 'عمالة', icon: '👷' },
-  { id: 'maintenance', name: 'صيانة', icon: '🔧' },
-  { id: 'other', name: 'أخرى', icon: '📦' },
-]
+export const EXPENSE_CATEGORIES = (t) => [
+  { id: 'feed', name: t.categories?.feed || 'أعلاف', icon: '🌾' },
+  { id: 'medicine', name: t.categories?.medicine || 'أدوية', icon: '💊' },
+  { id: 'electricity', name: t.categories?.electricity || 'كهرباء', icon: '⚡' },
+  { id: 'water', name: t.categories?.water || 'ماء', icon: '💧' },
+  { id: 'labor', name: t.categories?.labor || 'عمالة', icon: '👷' },
+  { id: 'maintenance', name: t.categories?.maintenance || 'صيانة', icon: '🔧' },
+  { id: 'other', name: t.categories?.other || 'أخرى', icon: '📦' },
+];
 
-export const FAMILIES = [
-  { id: 1, name: 'عائلة لؤي ومالك', members: [1, 2], icon: '👨‍👩‍👦' },
-  { id: 2, name: 'عائلة وداد وعليا', members: [3, 6], icon: '👨‍👩‍👧' },
-  { id: 3, name: 'عائلة طارق وسارا', members: [4, 5], icon: '👨‍👩‍👧' },
+export const INITIAL_INVESTORS = []
+
+export const FAMILIES = (t) => [
+  { id: 'family1', name: t.eggs?.family1 || 'عائلة 1', icon: '👨‍👩‍👧‍👦' },
+  { id: 'family2', name: t.eggs?.family2 || 'عائلة 2', icon: '👨‍👩‍👧‍👦' },
+  { id: 'family3', name: t.eggs?.family3 || 'عائلة 3', icon: '👨‍👩‍👧‍👦' },
 ]

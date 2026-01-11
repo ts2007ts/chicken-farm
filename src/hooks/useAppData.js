@@ -4,13 +4,21 @@ import {
   subscribeToInvestors,
   subscribeToTransactions,
   subscribeToEggs,
-  initializeInvestors
+  initializeInvestors,
+  subscribeToSettings,
+  subscribeToChickenInventory,
+  subscribeToFeedInventory,
+  subscribeToArchives
 } from '../firebase/firestore'
 
 export function useAppData(currentUser) {
   const [investors, setInvestors] = useState(INITIAL_INVESTORS)
   const [transactions, setTransactions] = useState([])
   const [eggs, setEggs] = useState([])
+  const [settings, setSettings] = useState({})
+  const [chickenInventory, setChickenInventory] = useState([])
+  const [feedInventory, setFeedInventory] = useState([])
+  const [archives, setArchives] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -19,8 +27,10 @@ export function useAppData(currentUser) {
       return
     }
 
-    // Initialize investors in Firestore if they don't exist
-    initializeInvestors(INITIAL_INVESTORS)
+    // Initialize investors in Firestore ONLY if they don't exist and we have initial data (now empty)
+    if (INITIAL_INVESTORS.length > 0) {
+      initializeInvestors(INITIAL_INVESTORS)
+    }
 
     // Subscribe to real-time updates
     const unsubInvestors = subscribeToInvestors((data) => {
@@ -40,14 +50,34 @@ export function useAppData(currentUser) {
       setEggs(data)
     })
 
+    const unsubSettings = subscribeToSettings((data) => {
+      setSettings(data)
+    })
+
+    const unsubChicken = subscribeToChickenInventory((data) => {
+      setChickenInventory(data)
+    })
+
+    const unsubFeed = subscribeToFeedInventory((data) => {
+      setFeedInventory(data)
+    })
+
+    const unsubArchives = subscribeToArchives((data) => {
+      setArchives(data)
+    })
+
     setLoading(false)
 
     return () => {
       unsubInvestors()
       unsubTransactions()
       unsubEggs()
+      unsubSettings()
+      unsubChicken()
+      unsubFeed()
+      unsubArchives()
     }
   }, [currentUser])
 
-  return { investors, transactions, eggs, loading }
+  return { investors, transactions, eggs, settings, chickenInventory, feedInventory, archives, loading }
 }
