@@ -56,5 +56,10 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if isSignedIn();
     }
+
+    match /debts/{debtId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
   }
 }

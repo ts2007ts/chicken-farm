@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -6,7 +6,14 @@ function ContributionForm({ investors, onSubmit, onClose }) {
   const { isAdmin } = useAuth()
   const { t } = useLanguage()
   
-  const [investorId, setInvestorId] = useState(investors[0]?.id || '')
+  const [investorId, setInvestorId] = useState('')
+
+  // Initialize investorId when investors are loaded
+  useEffect(() => {
+    if (investors.length > 0 && !investorId) {
+      setInvestorId(investors[0].id || investors[0].uid || '')
+    }
+  }, [investors])
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -57,7 +64,7 @@ function ContributionForm({ investors, onSubmit, onClose }) {
           required
         >
           {investors.map(inv => (
-            <option key={inv.id} value={inv.id}>{inv.name}</option>
+            <option key={inv.id || inv.uid} value={inv.id || inv.uid}>{inv.name}</option>
           ))}
         </select>
       </div>

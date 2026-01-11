@@ -26,7 +26,8 @@ export const en = {
     success: 'Success',
     email: 'Email',
     password: 'Password',
-    importExport: 'Import / Export Data',
+    importExport: 'Import/Export Data',
+    debts: 'Debts & Payables'
   },
   login: {
     title: 'Chicken Farm',
@@ -156,14 +157,18 @@ export const en = {
       expense: 'Large Expense Recorded',
       capital: 'Capital Updated',
       contribution: 'New Contribution',
-      reject: 'Egg Delivery Rejected'
+      reject: 'Egg Delivery Rejected',
+      debt_payment_fund: 'Debt Payment (Fund)',
+      debt_payment_investor: 'Debt Payment (Investor)'
     },
     messages: {
       egg: 'Recorded production of {quantity} new eggs.',
       expense: 'Recorded new expense of {amount} {currency}: {note}',
       capital: 'Capital updated for {name} to {amount} {currency}',
       contribution: 'Added {amount} {currency} to {name}\'s account',
-      reject: 'Family egg delivery was rejected and converted to cash ({amount} {currency})'
+      reject: 'Family egg delivery was rejected and converted to cash ({amount} {currency})',
+      debt_payment_fund: 'Paid {amount} {currency} for debt ({creditor}) from the general fund.',
+      debt_payment_investor: 'Paid {amount} {currency} for debt ({creditor}) by investor {name}.'
     }
   },
   categories: {

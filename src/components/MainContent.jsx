@@ -11,13 +11,16 @@ import {
   ImportExportForm,
   ChickenForm,
   FeedForm,
-  ArchiveForm
+  ArchiveForm,
+  DebtForm,
+  DebtPaymentForm
 } from './forms'
 import Dashboard from './dashboard/Dashboard'
 import InvestorList from './investors/InvestorList'
 import TransactionList from './transactions/TransactionList'
 import EggManagement from './eggs/EggManagement'
 import InventoryTab from './inventory/InventoryTab'
+import DebtsPage from './debts/DebtsPage'
 import SuperAdminDashboard from './admin/SuperAdminDashboard'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -170,6 +173,16 @@ function MainContent({ activeTab, showImportExportModal, setShowImportExportModa
           onArchiveCycle={() => setShowArchiveModal(true)}
           onDeleteChicken={actions.handleDeleteChickenRecord}
           onDeleteFeed={actions.handleDeleteFeedRecord}
+        />
+      )}
+
+      {activeTab === 'debts' && (
+        <DebtsPage 
+          investors={investors}
+          onAddDebt={actions.handleAddDebt}
+          onUpdateDebt={actions.handleUpdateDebt}
+          onDeleteDebt={actions.handleDeleteDebt}
+          onConfirmPayment={actions.handleAddDebtPayment}
         />
       )}
 

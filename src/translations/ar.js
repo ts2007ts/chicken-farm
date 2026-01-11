@@ -26,7 +26,8 @@ export const ar = {
     success: 'تم بنجاح',
     email: 'البريد الإلكتروني',
     password: 'كلمة المرور',
-    importExport: 'استيراد / تصدير البيانات',
+    importExport: 'استيراد وتصدير البيانات',
+    debts: 'الديون والمستحقات'
   },
   login: {
     title: 'مزرعة الدجاج',
@@ -158,14 +159,18 @@ export const ar = {
         expense: 'مصروفات كبيرة',
         capital: 'تحديث رأس المال',
         contribution: 'إضافة للرأسمال',
-        reject: 'رفض استلام بيض'
+        reject: 'رفض استلام بيض',
+        debt_payment_fund: 'دفع دين من الصندوق',
+        debt_payment_investor: 'دفع دين من قبل المستثمر'
       },
       messages: {
         egg: 'تم تسجيل إنتاج {quantity} بيضة جديدة.',
         expense: 'تم تسجيل مصروف جديد بمبلغ {amount} {currency}: {note}',
         capital: 'تم تحديث رأس المال للمستثمر {name} ليصبح {amount} {currency}',
         contribution: 'تمت إضافة مبلغ {amount} {currency} لحساب المستثمر {name}',
-        reject: 'تم رفض استلام حصة العائلة من البيض وتحويلها لمبلغ مالي ({amount} {currency})'
+        reject: 'تم رفض استلام حصة العائلة من البيض وتحويلها لمبلغ مالي ({amount} {currency})',
+        debt_payment_fund: 'تم دفع مبلغ {amount} {currency} للدين ({creditor}) من الصندوق العام.',
+        debt_payment_investor: 'تم سداد مبلغ {amount} {currency} للدين ({creditor}) بواسطة المستثمر {name}.'
       }
     },
   },

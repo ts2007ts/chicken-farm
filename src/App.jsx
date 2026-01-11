@@ -29,6 +29,7 @@ function App() {
     { id: 'expenses', name: t.common.expenses, icon: '💰' },
     { id: 'eggs', name: t.common.eggs, icon: '🥚' },
     { id: 'inventory', name: t.common.inventory, icon: '📋' },
+    { id: 'debts', name: language === 'ar' ? 'الديون' : 'Debts', icon: '📝' },
   ]
 
   if (isSuperAdmin()) {

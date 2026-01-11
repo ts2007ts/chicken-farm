@@ -23,14 +23,52 @@ export default function NotificationBell() {
     const { titleKey, messageKey, params } = notification;
     if (!titleKey || !messageKey) return { title: notification.title, message: notification.message };
 
-    // Simple translation helper
+    const translations = language === 'ar' ? ar : en;
+    
+    // Improved nested value lookup that handles prefix keys properly
     const getNestedValue = (obj, path) => {
-      return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+      if (!path) return null;
+      const parts = path.split('.');
+      let current = obj;
+      
+      for (const part of parts) {
+        if (current && current[part] !== undefined) {
+          current = current[part];
+        } else {
+          return null;
+        }
+      }
+      return typeof current === 'string' ? current : null;
     };
 
-    const translations = language === 'ar' ? ar : en;
-    let title = getNestedValue(translations, titleKey) || titleKey;
-    let message = getNestedValue(translations, messageKey) || messageKey;
+    let title = getNestedValue(translations, titleKey);
+    let message = getNestedValue(translations, messageKey);
+
+    // Dynamic search for keys in root or inventory.notifications
+    if (!title || !message) {
+      const findKeyInTree = (obj, targetKey) => {
+        // Direct match
+        const direct = getNestedValue(obj, targetKey);
+        if (direct) return direct;
+
+        // Try with inventory prefix
+        const withInv = getNestedValue(obj, `inventory.${targetKey}`);
+        if (withInv) return withInv;
+
+        // Try searching last part
+        const parts = targetKey.split('.');
+        const lastPart = parts[parts.length - 1];
+        
+        // Search in possible locations
+        return obj.notifications?.types?.[lastPart] || 
+               obj.notifications?.messages?.[lastPart] ||
+               obj.inventory?.notifications?.types?.[lastPart] ||
+               obj.inventory?.notifications?.messages?.[lastPart];
+      };
+
+      if (!title) title = findKeyInTree(translations, titleKey) || notification.title || titleKey;
+      if (!message) message = findKeyInTree(translations, messageKey) || notification.message || messageKey;
+    }
 
     // Replace params in message
     if (params) {

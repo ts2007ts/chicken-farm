@@ -14,6 +14,10 @@ import {
   addFeedRecord,
   deleteFeedRecord,
   archiveCycle,
+  addDebt,
+  updateDebt,
+  deleteDebt,
+  getDebt
 } from '../firebase/firestore'
 import { useNotifications } from '../contexts/NotificationContext'
 
@@ -23,22 +27,31 @@ export function useActions(investors, userProfile) {
   const handleSetCapital = async (investorId, amount) => {
     try {
       await updateInvestor(investorId, { initialCapital: amount, currentCapital: amount })
-      const investor = investors.find(inv => inv.id === investorId)
-      await addLog({
-        type: 'set_capital',
-        message: `Set capital for ${investor?.name} to ${amount}`,
-        user: userProfile?.investorName || 'Admin',
-        details: { investorId, amount }
-      })
+      
+      const investor = (investors || []).find(inv => {
+        const invId = String(inv.id || '');
+        const invUid = String(inv.uid || '');
+        const targetId = String(investorId || '');
+        return (invId === targetId || invUid === targetId) && targetId !== '';
+      });
+      
+      if (investor) {
+        await addLog({
+          type: 'set_capital',
+          message: `Set capital for ${investor.name} to ${amount.toLocaleString()}`,
+          user: userProfile?.investorName || 'Admin',
+          details: { investorId: investor.id || investor.uid, amount }
+        })
 
-      // Notify all investors about capital change
-      await notifyAllInvestors(
-        'notifications.types.capital',
-        'notifications.messages.capital',
-        'capital',
-        investorId,
-        { name: investor?.name, amount, currency: 'ل.س' }
-      )
+        // Notify all investors about capital change
+        await notifyAllInvestors(
+          'notifications.types.capital',
+          'notifications.messages.capital',
+          'capital',
+          investor.id || investor.uid,
+          { name: investor.name, amount: amount.toLocaleString(), currency: 'ل.س' }
+        )
+      }
     } catch (error) {
       console.error("Error setting capital:", error)
       alert("خطأ في حفظ رأس المال")
@@ -64,7 +77,7 @@ export function useActions(investors, userProfile) {
         'notifications.messages.expense',
         'expense',
         transactionId,
-        { amount: expense.amount, currency: 'ل.س', note: expense.note || '' }
+        { amount: expense.amount.toLocaleString(), currency: 'ل.س', note: expense.note || '' }
       )
     } catch (error) {
       console.error("Error adding expense:", error)
@@ -108,20 +121,33 @@ export function useActions(investors, userProfile) {
 
   const handleAddContribution = async (investorId, amount, note, date) => {
     try {
-      const investor = investors.find(inv => inv.id === investorId)
+      // Find the investor using robust comparison that covers all possible ID fields
+      const investor = (investors || []).find(inv => {
+        const invId = String(inv.id || '');
+        const invUid = String(inv.uid || '');
+        const targetId = String(investorId || '');
+        return (invId === targetId || invUid === targetId) && targetId !== '';
+      });
+      
+      if (!investor) {
+        alert(`خطأ: لم يتم العثور على المستثمر (ID: ${investorId}) في القائمة الحالية. يرجى تحديث الصفحة.`);
+        return;
+      }
+
       const transactionId = await addTransaction({
         type: 'contribution',
-        investorId,
+        investorId: investor.id || investor.uid,
         investorName: investor.name,
         amount,
         note,
         date: date || new Date().toISOString(),
       }, userProfile?.email)
+      
       await addLog({
         type: 'add_contribution',
-        message: `Added contribution for ${investor?.name}: ${amount}`,
+        message: `Added contribution for ${investor.name}: ${amount}`,
         user: userProfile?.investorName || 'Admin',
-        details: { investorId, amount, note }
+        details: { investorId: investor.id || investor.uid, amount, note }
       })
 
       // Notify all investors about new contribution
@@ -130,11 +156,11 @@ export function useActions(investors, userProfile) {
         'notifications.messages.contribution',
         'contribution',
         transactionId,
-        { name: investor?.name, amount, currency: 'ل.س' }
+        { name: investor.name, amount: amount.toLocaleString(), currency: 'ل.س' }
       )
     } catch (error) {
-      console.error("Error adding contribution:", error)
-      alert("خطأ في حفظ الإضافة")
+      console.error("Error adding contribution:", error);
+      alert("خطأ في حفظ الإضافة");
     }
   }
 
@@ -178,7 +204,7 @@ export function useActions(investors, userProfile) {
         'notifications.messages.egg',
         'egg',
         eggId,
-        { quantity }
+        { quantity: quantity.toLocaleString() }
       )
     } catch (error) {
       console.error("Error adding eggs:", error)
@@ -199,11 +225,23 @@ export function useActions(investors, userProfile) {
 
   const handleSettlement = async (investorId, amount, type, note, date) => {
     try {
-      const investor = investors.find(inv => inv.id === investorId)
+      const investor = (investors || []).find(inv => {
+        const invId = String(inv.id || '');
+        const invUid = String(inv.uid || '');
+        const targetId = String(investorId || '');
+        return (invId === targetId || invUid === targetId) && targetId !== '';
+      });
+      
+      if (!investor) {
+        console.error("Investor not found for settlement:", investorId)
+        alert(`خطأ: لم يتم العثور على المستثمر (ID: ${investorId})`)
+        return
+      }
+
       await addTransaction({
         type: 'settlement',
         settlementType: type,
-        investorId,
+        investorId: investor.id || investor.uid,
         investorName: investor.name,
         amount: parseFloat(amount),
         note,
@@ -432,6 +470,162 @@ export function useActions(investors, userProfile) {
     }
   }
 
+  const handleAddDebt = async (debtData) => {
+    try {
+      // For initial debt creation, we don't automatically create transactions
+      // Payments will be handled via a separate confirmation process
+      const initialPaid = debtData.paidAmount || 0;
+      const debtToCreate = {
+        ...debtData,
+        payments: [] // Track individual payment records
+      };
+
+      const debtId = await addDebt(debtToCreate, userProfile?.email);
+      
+      await addLog({
+        type: 'add_debt',
+        message: `Added debt for: ${debtData.creditorName} - Total: ${debtData.totalAmount}`,
+        user: userProfile?.investorName || 'Admin',
+        details: debtData
+      });
+
+      return debtId;
+    } catch (error) {
+      console.error("Error adding debt:", error);
+      alert("خطأ في إضافة الدين");
+    }
+  };
+
+  const handleAddDebtPayment = async (debtId, paymentData) => {
+    try {
+      const debt = await getDebt(debtId);
+      if (!debt) throw new Error("Debt not found");
+
+      const { amount, source, date, investorPayments } = paymentData;
+      
+      // 1. Create Transactions based on source
+      
+      // ALWAYS create an expense for the total amount paid, 
+      // regardless of source, so it's shared among all investors.
+      const expenseId = await addTransaction({
+        type: 'expense',
+        category: 'maintenance',
+        amount: amount,
+        note: `${source === 'fund' ? 'دفع من الصندوق' : 'دفع بواسطة مستثمر'} للدين: ${debt.creditorName} - ${debt.description || ''}`,
+        date: date,
+        relatedDebtId: debtId
+      }, userProfile?.email);
+
+      // Notify all investors about the expense (debt payment)
+      if (source === 'fund') {
+        await notifyAllInvestors(
+          'notifications.types.debt_payment_fund',
+          'notifications.messages.debt_payment_fund',
+          'expense',
+          expenseId,
+          { amount: amount.toLocaleString(), currency: 'ل.س', creditor: debt.creditorName }
+        );
+      }
+
+      // If paid by specific investors, also create contribution records for them
+      if (source === 'investors' && investorPayments) {
+        for (const [investorId, paidAmount] of Object.entries(investorPayments)) {
+          if (paidAmount > 0) {
+            const investor = (investors || []).find(inv => String(inv.id || inv.uid) === String(investorId));
+            if (investor) {
+              const contributionId = await addTransaction({
+                type: 'contribution',
+                investorId: investor.id || investor.uid,
+                investorName: investor.name,
+                amount: paidAmount,
+                note: `مساهمة شخصية في دفع دين (تم تقييدها كدين للمستثمر): ${debt.creditorName}`,
+                date: date,
+                relatedDebtId: debtId
+              }, userProfile?.email);
+
+              // Notify all about the specific investor's contribution
+              await notifyAllInvestors(
+                'notifications.types.debt_payment_investor',
+                'notifications.messages.debt_payment_investor',
+                'contribution',
+                contributionId,
+                { amount: paidAmount.toLocaleString(), currency: 'ل.س', creditor: debt.creditorName, name: investor.name }
+              );
+            }
+          }
+        }
+      }
+
+      // 2. Update Debt record
+      const newPaidAmount = (debt.paidAmount || 0) + amount;
+      const updatedPayments = [...(debt.payments || []), {
+        amount,
+        source,
+        date,
+        investorPayments: investorPayments || null, // Firebase doesn't accept undefined
+        confirmedBy: userProfile?.investorName || 'Admin',
+        confirmedAt: new Date().toISOString()
+      }];
+
+      const updates = {
+        paidAmount: newPaidAmount,
+        remainingAmount: Math.max(0, debt.totalAmount - newPaidAmount),
+        status: newPaidAmount >= debt.totalAmount ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'pending'),
+        payments: updatedPayments
+      };
+
+      // Ensure no undefined values are sent to Firebase
+      Object.keys(updates).forEach(key => {
+        if (updates[key] === undefined) {
+          delete updates[key];
+        }
+      });
+
+      await updateDebt(debtId, updates, userProfile?.email);
+
+      await addLog({
+        type: 'confirm_debt_payment',
+        message: `Confirmed payment for ${debt.creditorName}: ${amount} SYP from ${source}`,
+        user: userProfile?.investorName || 'Admin',
+        details: paymentData
+      });
+
+    } catch (error) {
+      console.error("Error confirming debt payment:", error);
+      alert("خطأ في تأكيد الدفع");
+    }
+  };
+
+  const handleUpdateDebt = async (id, updates) => {
+    try {
+      await updateDebt(id, updates, userProfile?.email);
+      await addLog({
+        type: 'update_debt',
+        message: `Updated debt for: ${updates.creditorName}`,
+        user: userProfile?.investorName || 'Admin',
+        details: updates
+      });
+    } catch (error) {
+      console.error("Error updating debt:", error);
+      alert("خطأ في تحديث الدين");
+    }
+  };
+
+  const handleDeleteDebt = async (id) => {
+    try {
+      await deleteDebt(id);
+      await addLog({
+        type: 'delete_debt',
+        message: `Deleted debt record`,
+        user: userProfile?.investorName || 'Admin',
+        details: { id }
+      });
+    } catch (error) {
+      console.error("Error deleting debt:", error);
+      alert("خطأ في حذف الدين");
+    }
+  };
+
   return {
     handleSetCapital,
     handleAddExpense,
@@ -449,6 +643,10 @@ export function useActions(investors, userProfile) {
     handleDeleteChickenRecord,
     handleAddFeedRecord,
     handleDeleteFeedRecord,
-    handleArchiveCycle
+    handleArchiveCycle,
+    handleAddDebt,
+    handleUpdateDebt,
+    handleDeleteDebt,
+    handleAddDebtPayment
   }
 }

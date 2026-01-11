@@ -362,6 +362,55 @@ export async function deleteFeedRecord(id) {
   await deleteDoc(doc(db, COLLECTIONS.FEED_INVENTORY, id))
 }
 
+// ============ DEBTS ============
+export const addDebt = async (debtData, userEmail) => {
+  try {
+    const docRef = await addDoc(collection(db, 'debts'), {
+      ...debtData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      createdBy: userEmail
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding debt: ", error);
+    throw error;
+  }
+};
+
+export const updateDebt = async (id, updates, userEmail) => {
+  try {
+    const docRef = doc(db, 'debts', id);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+      updatedBy: userEmail
+    });
+  } catch (error) {
+    console.error("Error updating debt: ", error);
+    throw error;
+  }
+};
+
+export const deleteDebt = async (id) => {
+  try {
+    await deleteDoc(doc(db, 'debts', id));
+  } catch (error) {
+    console.error("Error deleting debt: ", error);
+    throw error;
+  }
+};
+
+export const getDebt = async (id) => {
+  try {
+    const docSnap = await getDoc(doc(db, 'debts', id));
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+  } catch (error) {
+    console.error("Error getting debt: ", error);
+    throw error;
+  }
+};
+
 // ============ ARCHIVES (Cycle Archiving) ============
 export async function archiveCycle(archiveData) {
   const docRef = await addDoc(collection(db, COLLECTIONS.ARCHIVES), {
