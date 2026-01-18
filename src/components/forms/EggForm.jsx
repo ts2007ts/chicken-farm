@@ -5,17 +5,28 @@ function EggForm({ onSubmit, onClose }) {
   const { t } = useLanguage()
   const [quantity, setQuantity] = useState('')
   const [note, setNote] = useState('')
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (quantity) {
-      onSubmit(parseInt(quantity), note)
+      onSubmit(parseInt(quantity), note, date)
       onClose()
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-gray-700 mb-2">{t.common.date}</label>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+          required
+        />
+      </div>
       <div>
         <label className="block text-gray-700 mb-2">{t.eggs.quantity}</label>
         <input

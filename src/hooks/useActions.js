@@ -27,14 +27,14 @@ export function useActions(investors, userProfile) {
   const handleSetCapital = async (investorId, amount) => {
     try {
       await updateInvestor(investorId, { initialCapital: amount, currentCapital: amount })
-      
+
       const investor = (investors || []).find(inv => {
         const invId = String(inv.id || '');
         const invUid = String(inv.uid || '');
         const targetId = String(investorId || '');
         return (invId === targetId || invUid === targetId) && targetId !== '';
       });
-      
+
       if (investor) {
         await addLog({
           type: 'set_capital',
@@ -45,11 +45,11 @@ export function useActions(investors, userProfile) {
 
         // Notify all investors about capital change
         await notifyAllInvestors(
-          'notifications.types.capital',
-          'notifications.messages.capital',
+          'eggs.notifications.types.capital',
+          'eggs.notifications.messages.capital',
           'capital',
           investor.id || investor.uid,
-          { name: investor.name, amount: amount.toLocaleString(), currency: 'ل.س' }
+          { name: investor.name, admin: userProfile?.investorName || 'Admin', amount: amount.toLocaleString(), currency: 'ل.س' }
         )
       }
     } catch (error) {
@@ -73,11 +73,11 @@ export function useActions(investors, userProfile) {
 
       // Notify all investors about new expense
       await notifyAllInvestors(
-        'notifications.types.expense',
-        'notifications.messages.expense',
+        'eggs.notifications.types.expense',
+        'eggs.notifications.messages.expense',
         'expense',
         transactionId,
-        { amount: expense.amount.toLocaleString(), currency: 'ل.س', note: expense.note || '' }
+        { amount: expense.amount.toLocaleString(), currency: 'ل.س', note: expense.note || '', name: userProfile?.investorName || 'Admin' }
       )
     } catch (error) {
       console.error("Error adding expense:", error)
@@ -103,9 +103,9 @@ export function useActions(investors, userProfile) {
     try {
       const oldSettings = await getSettings();
       const oldValue = id === 'family_settings' ? oldSettings.family_settings?.eggPrice : null;
-      
+
       await updateSetting(id, data);
-      
+
       if (id === 'family_settings' && data.eggPrice !== oldValue) {
         await addLog({
           type: 'update_setting',
@@ -128,7 +128,7 @@ export function useActions(investors, userProfile) {
         const targetId = String(investorId || '');
         return (invId === targetId || invUid === targetId) && targetId !== '';
       });
-      
+
       if (!investor) {
         alert(`خطأ: لم يتم العثور على المستثمر (ID: ${investorId}) في القائمة الحالية. يرجى تحديث الصفحة.`);
         return;
@@ -142,7 +142,7 @@ export function useActions(investors, userProfile) {
         note,
         date: date || new Date().toISOString(),
       }, userProfile?.email)
-      
+
       await addLog({
         type: 'add_contribution',
         message: `Added contribution for ${investor.name}: ${amount}`,
@@ -152,11 +152,11 @@ export function useActions(investors, userProfile) {
 
       // Notify all investors about new contribution
       await notifyAllInvestors(
-        'notifications.types.contribution',
-        'notifications.messages.contribution',
+        'eggs.notifications.types.contribution',
+        'eggs.notifications.messages.contribution',
         'contribution',
         transactionId,
-        { name: investor.name, amount: amount.toLocaleString(), currency: 'ل.س' }
+        { name: investor.name, amount: amount.toLocaleString(), currency: 'ل.س', admin: userProfile?.investorName || 'Admin' }
       )
     } catch (error) {
       console.error("Error adding contribution:", error);
@@ -164,12 +164,12 @@ export function useActions(investors, userProfile) {
     }
   }
 
-  const handleAddEggs = async (quantity, note, families) => {
+  const handleAddEggs = async (quantity, note, families, date) => {
     try {
       // Calculate initial delivery amounts for each current family
       const familyCount = families?.length || 1;
       const sharePerFamily = Math.floor(quantity / familyCount);
-      
+
       const deliveries = {};
       if (families && families.length > 0) {
         families.forEach(family => {
@@ -185,7 +185,7 @@ export function useActions(investors, userProfile) {
       const eggId = await addEgg({
         quantity,
         note,
-        date: new Date().toISOString(),
+        date: date || new Date().toISOString(),
         recordedBy: userProfile.investorName,
         recordedById: userProfile.investorId,
         deliveries,
@@ -200,11 +200,11 @@ export function useActions(investors, userProfile) {
 
       // Send notifications
       await notifyAllInvestors(
-        'notifications.types.egg',
-        'notifications.messages.egg',
+        'eggs.notifications.types.egg',
+        'eggs.notifications.messages.egg',
         'egg',
         eggId,
-        { quantity: quantity.toLocaleString() }
+        { quantity: quantity.toLocaleString(), name: userProfile?.investorName || 'Admin' }
       )
     } catch (error) {
       console.error("Error adding eggs:", error)
@@ -231,7 +231,7 @@ export function useActions(investors, userProfile) {
         const targetId = String(investorId || '');
         return (invId === targetId || invUid === targetId) && targetId !== '';
       });
-      
+
       if (!investor) {
         console.error("Investor not found for settlement:", investorId)
         alert(`خطأ: لم يتم العثور على المستثمر (ID: ${investorId})`)
@@ -268,8 +268,8 @@ export function useActions(investors, userProfile) {
     try {
       const egg = eggs.find(e => e.id === eggId)
       const deliveries = egg.deliveries || {}
-      
-      await updateEggFirestore(eggId, { 
+
+      await updateEggFirestore(eggId, {
         deliveries: {
           ...deliveries,
           [familyId]: {
@@ -286,16 +286,16 @@ export function useActions(investors, userProfile) {
     }
   }
 
-  const handleRejectEggDelivery = async (eggId, familyId, eggs, families, settings) => {
+  const handleRejectEggDelivery = async (eggId, familyId, eggs, families, settings, rejectionType = 'financial') => {
     try {
       const egg = eggs.find(e => e.id === eggId)
       const family = families.find(f => f.id === familyId)
       const deliveries = egg.deliveries || {}
-      
-      // Calculate share per family member
+
+      // Calculate share per family member (only if financial rejection)
       const eggPrice = settings?.family_settings?.eggPrice || 0
       const totalEggShare = Math.floor(egg.quantity / Math.max(1, egg.familyCountAtProduction || families.length))
-      const cashValue = totalEggShare * eggPrice
+      const cashValue = rejectionType === 'financial' ? totalEggShare * eggPrice : 0
 
       // 1. Update egg record status
       await updateEggFirestore(eggId, {
@@ -304,19 +304,20 @@ export function useActions(investors, userProfile) {
           [familyId]: {
             delivered: false,
             status: 'rejected',
+            rejectionType,
             rejectedAt: new Date().toISOString(),
             rejectedBy: userProfile.investorName,
             cashValue,
-            eggPrice
+            eggPrice: rejectionType === 'financial' ? eggPrice : 0
           }
         }
       }, userProfile?.email)
 
-      // 2. Create automated contribution transactions for each family member
+      // 2. Create automated contribution transactions for each family member (ONLY if financial)
       const familyMemberIds = family.investorIds || []
-      if (familyMemberIds.length > 0) {
+      if (rejectionType === 'financial' && familyMemberIds.length > 0) {
         const sharePerMember = cashValue / familyMemberIds.length
-        
+
         for (const investorId of familyMemberIds) {
           const investor = investors.find(inv => String(inv.id) === String(investorId))
           if (investor) {
@@ -334,12 +335,14 @@ export function useActions(investors, userProfile) {
           }
         }
       }
-      
+
       await addLog({
         type: 'reject_egg_delivery',
-        message: `Rejected ${totalEggShare} eggs for ${family.name}. Converted to ${cashValue} SYP and split among members.`,
+        message: rejectionType === 'financial'
+          ? `Rejected ${totalEggShare} eggs for ${family.name}. Converted to ${cashValue} SYP and split among members.`
+          : `Simple rejection of ${totalEggShare} eggs for ${family.name} (No cash conversion).`,
         user: userProfile?.investorName || 'Admin',
-        details: { eggId, familyId, cashValue, eggPrice, totalEggShare, memberCount: familyMemberIds.length }
+        details: { eggId, familyId, cashValue, eggPrice, totalEggShare, memberCount: familyMemberIds.length, rejectionType }
       })
 
       // Notify family members
@@ -348,14 +351,27 @@ export function useActions(investors, userProfile) {
         if (investor && investor.uid) {
           await sendNotification(
             investor.uid,
-            '⚠️ رفض استلام بيض',
-            `تم رفض استلام حصة العائلة من البيض وتحويلها لمبلغ مالي (${cashValue / familyMemberIds.length} ل.س)`,
-            'reject'
+            rejectionType === 'financial' ? '⚠️ رفض استلام بيض' : 'ℹ️ رفض استلام بيض (عادي)',
+            rejectionType === 'financial'
+              ? `تم رفض استلام حصة العائلة من البيض وتحويلها لمبلغ مالي (${cashValue / familyMemberIds.length} ل.س)`
+              : `تم رفض استلام حصة العائلة من البيض (رفض عادي بدون تحويل مالي)`,
+            'reject',
+            'eggs.notifications.types.reject',
+            rejectionType === 'financial' ? 'eggs.notifications.messages.reject' : 'eggs.notifications.messages.reject_simple',
+            {
+              name: userProfile?.investorName || 'Admin',
+              amount: (cashValue / familyMemberIds.length).toLocaleString(),
+              currency: 'ل.س'
+            }
           )
         }
       }
 
-      alert(`تم رفض الاستلام وتحويل ${totalEggShare} بيضة إلى مبلغ ${cashValue} وتوزيعها على أفراد العائلة`)
+      const alertMsg = rejectionType === 'financial'
+        ? `تم رفض الاستلام وتحويل ${totalEggShare} بيضة إلى مبلغ ${cashValue} وتوزيعها على أفراد العائلة`
+        : `تم رفض الاستلام بنجاح (رفض عادي بدون قيود مالية)`
+
+      alert(alertMsg)
     } catch (error) {
       console.error("Error rejecting egg delivery:", error)
       alert("خطأ في رفض الاستلام")
@@ -449,7 +465,7 @@ export function useActions(investors, userProfile) {
 
   const handleArchiveCycle = async (cycleName) => {
     if (!window.confirm('هل أنت متأكد من أرشفة هذه الدورة؟ سيتم مسح جميع البيانات الحالية والبدء بدورة جديدة.')) return
-    
+
     try {
       const currentData = await exportAllData()
       await archiveCycle({
@@ -481,7 +497,7 @@ export function useActions(investors, userProfile) {
       };
 
       const debtId = await addDebt(debtToCreate, userProfile?.email);
-      
+
       await addLog({
         type: 'add_debt',
         message: `Added debt for: ${debtData.creditorName} - Total: ${debtData.totalAmount}`,
@@ -502,9 +518,9 @@ export function useActions(investors, userProfile) {
       if (!debt) throw new Error("Debt not found");
 
       const { amount, source, date, investorPayments } = paymentData;
-      
+
       // 1. Create Transactions based on source
-      
+
       // ALWAYS create an expense for the total amount paid, 
       // regardless of source, so it's shared among all investors.
       const expenseId = await addTransaction({
@@ -519,11 +535,11 @@ export function useActions(investors, userProfile) {
       // Notify all investors about the expense (debt payment)
       if (source === 'fund') {
         await notifyAllInvestors(
-          'notifications.types.debt_payment_fund',
-          'notifications.messages.debt_payment_fund',
+          'eggs.notifications.types.debt_payment_fund',
+          'eggs.notifications.messages.debt_payment_fund',
           'expense',
           expenseId,
-          { amount: amount.toLocaleString(), currency: 'ل.س', creditor: debt.creditorName }
+          { amount: amount.toLocaleString(), currency: 'ل.س', creditor: debt.creditorName, name: userProfile?.investorName || 'Admin' }
         );
       }
 
@@ -545,8 +561,8 @@ export function useActions(investors, userProfile) {
 
               // Notify all about the specific investor's contribution
               await notifyAllInvestors(
-                'notifications.types.debt_payment_investor',
-                'notifications.messages.debt_payment_investor',
+                'eggs.notifications.types.debt_payment_investor',
+                'eggs.notifications.messages.debt_payment_investor',
                 'contribution',
                 contributionId,
                 { amount: paidAmount.toLocaleString(), currency: 'ل.س', creditor: debt.creditorName, name: investor.name }
