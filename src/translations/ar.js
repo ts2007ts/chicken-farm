@@ -105,6 +105,8 @@ export const ar = {
     recipient: 'المستلم',
     confirmDelivery: 'تأكيد استلام العائلة',
     rejectDelivery: 'رفض الاستلام (تحويل لمبلغ مالي)',
+    rejectWithReverse: 'رفض (تحويل لمبلغ مالي)',
+    rejectSimple: 'رفض عادي (بدون قيد مالي)',
     rejectedEggContribution: 'قيمة بيض مرفوض من عائلة',
     eggPrice: 'ثمن البيضة الواحدة',
     memberCount: 'عدد أفراد العائلة',
@@ -146,8 +148,10 @@ export const ar = {
       profitability: 'تحليل الربحية',
       netProfit: 'صافي الربح المتوقع',
       familyPerformance: 'أداء العائلات (الاستلام vs الرفض)',
-      confirmed: 'مؤكد',
-      rejected: 'مرفوض',
+      confirmed: 'مرات الاستلام',
+      rejected: 'مرات الرفض',
+      confirmedEggs: 'كمية البيض المستلم',
+      rejectedEggs: 'كمية البيض المرفوض',
       production: 'الإنتاج',
     },
     notifications: {
@@ -164,12 +168,13 @@ export const ar = {
         debt_payment_investor: 'دفع دين من قبل المستثمر'
       },
       messages: {
-        egg: 'تم تسجيل إنتاج {quantity} بيضة جديدة.',
-        expense: 'تم تسجيل مصروف جديد بمبلغ {amount} {currency}: {note}',
-        capital: 'تم تحديث رأس المال للمستثمر {name} ليصبح {amount} {currency}',
-        contribution: 'تمت إضافة مبلغ {amount} {currency} لحساب المستثمر {name}',
-        reject: 'تم رفض استلام حصة العائلة من البيض وتحويلها لمبلغ مالي ({amount} {currency})',
-        debt_payment_fund: 'تم دفع مبلغ {amount} {currency} للدين ({creditor}) من الصندوق العام.',
+        egg: 'تم تسجيل إنتاج {quantity} بيضة جديدة بواسطة {name}.',
+        expense: 'تم تسجيل مصروف جديد بمبلغ {amount} {currency} بواسطة {name}: {note}',
+        capital: 'تم تحديث رأس المال للمستثمر {name} بواسطة {admin} ليصبح {amount} {currency}',
+        contribution: 'تمت إضافة مبلغ {amount} {currency} لحساب المستثمر {name} بواسطة {admin}',
+        reject: 'تم رفض استلام حصة العائلة من البيض بواسطة {name} وتحويلها لمبلغ مالي ({amount} {currency})',
+        reject_simple: 'تم رفض استلام حصة العائلة من البيض (رفض عادي بدون تحويل مالي) بواسطة {name}',
+        debt_payment_fund: 'تم دفع مبلغ {amount} {currency} للدين ({creditor}) من الصندوق العام بواسطة {name}.',
         debt_payment_investor: 'تم سداد مبلغ {amount} {currency} للدين ({creditor}) بواسطة المستثمر {name}.'
       }
     },

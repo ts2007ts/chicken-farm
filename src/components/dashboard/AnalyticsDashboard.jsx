@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
@@ -28,19 +28,32 @@ export default function AnalyticsDashboard({ eggs, transactions, families, setti
   const familyData = families.map(family => {
     let confirmed = 0;
     let rejected = 0;
-    
+    let confirmedEggs = 0;
+    let rejectedEggs = 0;
+
     eggs.forEach(egg => {
       const delivery = egg.deliveries?.[family.id];
       if (delivery) {
-        if (delivery.status === 'delivered') confirmed++;
-        else if (delivery.status === 'rejected') rejected++;
+        // Calculate the actual share of eggs for this family in this production record
+        // Fallback to average if share not explicitly stored in delivery (though it usually is)
+        const familyShare = delivery.amount || Math.floor(egg.quantity / (egg.familyCountAtProduction || families.length));
+
+        if (delivery.status === 'delivered') {
+          confirmed++;
+          confirmedEggs += familyShare;
+        } else if (delivery.status === 'rejected') {
+          rejected++;
+          rejectedEggs += familyShare;
+        }
       }
     });
 
     return {
       name: family.name,
       confirmed,
-      rejected
+      rejected,
+      confirmedEggs,
+      rejectedEggs
     };
   });
 
@@ -96,8 +109,10 @@ export default function AnalyticsDashboard({ eggs, transactions, families, setti
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="confirmed" fill="#10b981" name={t?.eggs?.analytics?.confirmed || 'Confirmed'} />
-                <Bar dataKey="rejected" fill="#ef4444" name={t?.eggs?.analytics?.rejected || 'Rejected'} />
+                <Bar dataKey="confirmed" fill="#10b981" name={t?.eggs?.analytics?.confirmed || 'Confirmed (Times)'} />
+                <Bar dataKey="rejected" fill="#ef4444" name={t?.eggs?.analytics?.rejected || 'Rejected (Times)'} />
+                <Bar dataKey="confirmedEggs" fill="#34d399" name={t?.eggs?.analytics?.confirmedEggs || 'Confirmed (Eggs)'} />
+                <Bar dataKey="rejectedEggs" fill="#f87171" name={t?.eggs?.analytics?.rejectedEggs || 'Rejected (Eggs)'} />
               </BarChart>
             </ResponsiveContainer>
           </div>

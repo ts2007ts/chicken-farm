@@ -2,17 +2,17 @@ import { formatNumber, formatDate } from '../../utils/helpers'
 import { FAMILIES } from '../../constants'
 import { useLanguage } from '../../contexts/LanguageContext'
 
-function EggManagement({ 
-  totalEggs, 
+function EggManagement({
+  totalEggs,
   getInvestorEggs,
-  getFamilyEggs, 
-  eggs, 
+  getFamilyEggs,
+  eggs,
   families,
-  isAdmin, 
-  handleDeleteEgg, 
-  handleConfirmEggDelivery, 
+  isAdmin,
+  handleDeleteEgg,
+  handleConfirmEggDelivery,
   handleRejectEggDelivery,
-  setShowEggModal 
+  setShowEggModal
 }) {
   const { t, language } = useLanguage()
 
@@ -80,11 +80,10 @@ function EggManagement({
                     const isDelivered = delivery?.status === 'delivered' || delivery?.delivered === true
                     const isRejected = delivery?.status === 'rejected'
                     return (
-                      <div key={family.id} className={`p-3 rounded-lg border ${
-                        isDelivered ? 'bg-green-50 border-green-100' : 
-                        isRejected ? 'bg-red-50 border-red-100' : 
-                        'bg-gray-50 border-gray-100'
-                      }`}>
+                      <div key={family.id} className={`p-3 rounded-lg border ${isDelivered ? 'bg-green-50 border-green-100' :
+                          isRejected ? 'bg-red-50 border-red-100' :
+                            'bg-gray-50 border-gray-100'
+                        }`}>
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
                             <span className="text-xl">{family.icon}</span>
@@ -115,17 +114,23 @@ function EggManagement({
                         </div>
                         {!isDelivered && !isRejected && isAdmin() && (
                           <div className="flex flex-col gap-2">
-                            <button 
+                            <button
                               onClick={() => handleConfirmEggDelivery(egg.id, family.id)}
                               className="w-full bg-green-500 hover:bg-green-600 text-white py-1.5 rounded-md text-xs font-bold transition-all"
                             >
                               {t.eggs.confirmDelivery}
                             </button>
-                            <button 
-                              onClick={() => handleRejectEggDelivery(egg.id, family.id)}
-                              className="w-full bg-red-500 hover:bg-red-600 text-white py-1.5 rounded-md text-xs font-bold transition-all"
+                            <button
+                              onClick={() => handleRejectEggDelivery(egg.id, family.id, 'financial')}
+                              className="w-full bg-red-500 hover:bg-red-600 text-white py-1.5 rounded-md text-[10px] font-bold transition-all"
                             >
-                              {t.eggs.rejectDelivery}
+                              {t.eggs.rejectWithReverse}
+                            </button>
+                            <button
+                              onClick={() => handleRejectEggDelivery(egg.id, family.id, 'simple')}
+                              className="w-full bg-gray-500 hover:bg-gray-600 text-white py-1.5 rounded-md text-[10px] font-bold transition-all"
+                            >
+                              {t.eggs.rejectSimple}
                             </button>
                           </div>
                         )}

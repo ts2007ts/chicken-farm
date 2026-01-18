@@ -37,12 +37,15 @@ export function NotificationProvider({ children }) {
     return () => unsubscribe();
   }, [currentUser]);
 
-  const sendNotification = async (userId, title, message, type = 'info') => {
+  const sendNotification = async (userId, title, message, type = 'info', titleKey = null, messageKey = null, params = {}) => {
     try {
       await addDoc(collection(db, 'notifications'), {
         userId,
         title,
         message,
+        titleKey,
+        messageKey,
+        params,
         type,
         read: false,
         createdAt: serverTimestamp()
@@ -56,7 +59,7 @@ export function NotificationProvider({ children }) {
     try {
       const investorsSnapshot = await getDocs(collection(db, 'users'));
       const batch = writeBatch(db);
-      
+
       investorsSnapshot.docs.forEach(userDoc => {
         const notificationRef = doc(collection(db, 'notifications'));
         batch.set(notificationRef, {
@@ -70,7 +73,7 @@ export function NotificationProvider({ children }) {
           relatedId
         });
       });
-      
+
       await batch.commit();
     } catch (error) {
       console.error("Error notifying all investors:", error);
@@ -114,12 +117,12 @@ export function NotificationProvider({ children }) {
   };
 
   return (
-    <NotificationContext.Provider value={{ 
-      notifications, 
-      unreadCount, 
-      sendNotification, 
+    <NotificationContext.Provider value={{
+      notifications,
+      unreadCount,
+      sendNotification,
       notifyAllInvestors,
-      markAsRead, 
+      markAsRead,
       markAllAsRead,
       deleteNotificationsByRelatedId
     }}>
